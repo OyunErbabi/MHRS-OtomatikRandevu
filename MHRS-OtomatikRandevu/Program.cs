@@ -3,9 +3,11 @@ using MHRS_OtomatikRandevu.Models.RequestModels;
 using MHRS_OtomatikRandevu.Models.ResponseModels;
 using MHRS_OtomatikRandevu.Services;
 using MHRS_OtomatikRandevu.Services.Abstracts;
+using MHRS_OtomatikRandevu.TelegramBotService;
 using MHRS_OtomatikRandevu.Urls;
 using MHRS_OtomatikRandevu.Utils;
 using System.Net;
+using System.Runtime;
 
 namespace MHRS_OtomatikRandevu
 {
@@ -13,19 +15,76 @@ namespace MHRS_OtomatikRandevu
     {
         static string TC_NO;
         static string SIFRE;
+        static string TelegramBotToken;
 
         const string TOKEN_FILE_NAME = "token.txt";
-        static string JWT_TOKEN;
+        
         static DateTime TOKEN_END_DATE;
 
         static IClientService _client;
-        static INotificationService _notificationService;
+
+        static TelegramBotManager _telegramBotManager;
 
         static void Main(string[] args)
         {
             _client = new ClientService();
-            _notificationService = new NotificationService();
+            _telegramBotManager = new TelegramBotManager();
 
+            Console.Clear();
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("MHRS Otomatik Randevu Sistemine Hoşgeldiniz.");
+            Console.WriteLine("");
+            Console.WriteLine(String.Format("Yeni Bir Telegram Bot'u Oluşturmak İçin Aşağıdaki Adrese Gidin: \n{0}",TelegramUrls.BotFatherUrl));
+            Console.WriteLine("");
+            
+            //TelegramBotToken =  Console.ReadLine();
+
+
+            //Console.Clear();
+
+            //Console.WriteLine("Telegram Bot Api Keyiniz: " + TelegramBotToken);
+            bool isValidApiKey = false;
+            while (!isValidApiKey)
+            {
+                Console.WriteLine("Telegram Bot Api Keyinizi Girin:");
+                TelegramBotToken = Console.ReadLine();
+
+                
+
+                if (_telegramBotManager.TestApiKey(TelegramBotToken))
+                {
+                    Console.Clear();
+                    Console.WriteLine($"Bot Bulundu Ve Başlatıldı: {_telegramBotManager.GetBotUsername()}");
+                    string finalMessage = $"Bot Kurulumu Başarılı.\n\nLÜTFEN BU PROGRAMI KAPATMAYIN!\n\nLütfen {TelegramUrls.BaseBotUrl}{_telegramBotManager.GetBotUsername()} Adresine Gidin Ve /start Mesajı İle Telegram Üzerinden Devam Edin.";
+                    Console.WriteLine(finalMessage);
+                    isValidApiKey = true; 
+                }
+                else
+                {
+                    Console.Clear();
+                    Console.WriteLine("Geçersiz API Anahtarı! Tekrar Deneyin.");
+                }
+
+            }
+
+
+            //if (_telegramBotManager.TestApiKey(TelegramBotToken))
+            //{
+            //    //Console.WriteLine("Kurulum Başarılı.\n\nPROGRAMI KAPATMAYIN!\n\nLütfen /start Mesajı İle Telegram Üzerinden Devam Edin.");
+            //    string finalMessage = string.Format("Bot Kurulumu Başarılı.\n\nLÜTFEN BU PROGRAMI KAPATMAYIN!\n\nLütfen {0}{1} Adresine Gidin Ve /start Mesajı İle Telegram Üzerinden Devam Edin.",TelegramUrls.BaseBotUrl,_telegramBotManager.GetBotUsername());
+            //    Console.WriteLine(finalMessage);
+            //}
+            //else
+            //{
+            //    Console.WriteLine("Telegram Bot Api Keyinizi Girin:");
+            //}
+
+            
+
+           
+
+
+            /*
             #region Giriş Yap Bölümü
             do
             {
@@ -338,7 +397,7 @@ namespace MHRS_OtomatikRandevu
                 appointmentState = MakeAppointment(_client, appointmentRequestModel, sendNotification);
             } while (!appointmentState);
             #endregion
-
+            */
             Console.ReadKey();
         }
 
@@ -416,8 +475,10 @@ namespace MHRS_OtomatikRandevu
             var message = $"Randevu alındı! \nRandevu Tarihi -> {appointmentRequestModel.BaslangicZamani}";
             Console.WriteLine(message);
 
+            /*
             if (sendNotification)
                 _notificationService.SendNotification(message).Wait();
+            */
 
             return true;
         }
