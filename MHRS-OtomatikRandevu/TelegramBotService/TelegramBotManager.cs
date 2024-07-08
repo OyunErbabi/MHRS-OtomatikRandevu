@@ -27,6 +27,7 @@ namespace MHRS_OtomatikRandevu.TelegramBotService
                 {
                     var botInfo = telegramBotClient.GetMeAsync().Result;
                     TelegramBotName = botInfo.Username;
+                    Program._localDataManager.SetTelegramApiKey(apiKey);
                     CreateActivationCode();
                     result = true;
                 }

@@ -22,11 +22,13 @@ namespace MHRS_OtomatikRandevu
 
         static IClientService _client;
         static TelegramBotManager _telegramBotManager;
+        public static LocalDataManager _localDataManager;
 
         static void Main(string[] args)
         {
             _client = new ClientService();
             _telegramBotManager = new TelegramBotManager();
+            _localDataManager = new LocalDataManager();
 
             Console.Clear();
             Console.ForegroundColor = ConsoleColor.Green;
@@ -41,31 +43,44 @@ namespace MHRS_OtomatikRandevu
             //Console.Clear();
 
             //Console.WriteLine("Telegram Bot Api Keyiniz: " + TelegramBotToken);
-            bool isValidApiKey = false;
-            while (!isValidApiKey)
-            {
-                Console.WriteLine("Telegram Bot Api Keyinizi Girin:");
-                TelegramBotToken = Console.ReadLine();
 
-                if (_telegramBotManager.TestApiKey(TelegramBotToken))
+            if(_localDataManager.credentials.TelegramApiKey.ToLower() != "null")
+            {
+                Console.WriteLine("Kayıtlı Telegram Bot Api Keyiniz: " + _localDataManager.credentials.TelegramApiKey);
+                
+                if(_telegramBotManager.TestApiKey(_localDataManager.credentials.TelegramApiKey))
                 {
-                    Console.Clear();
-                    Console.WriteLine($"Bot Bulundu Ve Başlatıldı: {_telegramBotManager.GetBotUsername()}");
-                    string finalMessage = $"Bot Kurulumu Başarılı.\n\nLÜTFEN BU PROGRAMI KAPATMAYIN!\n\nLütfen {TelegramUrls.BaseBotUrl}{_telegramBotManager.GetBotUsername()} Adresine Gidin Ve /start Mesajı İle Telegram Üzerinden Devam Edin.";
-                    Console.WriteLine(finalMessage);
-                    Console.WriteLine($"Telegram Aktivasyon Kodunuz : {_telegramBotManager.ActvationCode}");
-                    isValidApiKey = true; 
+                    BotStarted();
                 }
                 else
                 {
-                    Console.Clear();
-                    Console.WriteLine("Geçersiz API Anahtarı! Tekrar Deneyin.");
+                    Console.WriteLine("Kayıtlı API Anahtarı Geçersiz! Lütfen Tekrar Girin.");
                 }
+            } 
+            else
+            {
+                bool isValidApiKey = false;
+                while (!isValidApiKey)
+                {
+                    Console.WriteLine("Telegram Bot Api Keyinizi Girin:");
+                    TelegramBotToken = Console.ReadLine();
 
+                    if (_telegramBotManager.TestApiKey(TelegramBotToken))
+                    {
+                        BotStarted();
+                        isValidApiKey = true;
+                    }
+                    else
+                    {
+                        Console.Clear();
+                        Console.WriteLine("Geçersiz API Anahtarı! Tekrar Deneyin.");
+                    }
+
+                }
             }
            
-            LocalDataManager.LocalDataManager.SaveData();
-            LocalDataManager.LocalDataManager.TestLoadData();
+            _localDataManager.SaveData();
+            _localDataManager.LoadData();
 
 
             /*
@@ -383,6 +398,15 @@ namespace MHRS_OtomatikRandevu
             #endregion
             */
             Console.ReadKey();
+        }
+
+        static void BotStarted()
+        {
+            Console.Clear();
+            Console.WriteLine($"Bot Bulundu Ve Başlatıldı: {_telegramBotManager.GetBotUsername()}");
+            string finalMessage = $"Bot Kurulumu Başarılı.\n\nLÜTFEN BU PROGRAMI KAPATMAYIN!\n\nLütfen {TelegramUrls.BaseBotUrl}{_telegramBotManager.GetBotUsername()} Adresine Gidin Ve /start Mesajı İle Telegram Üzerinden Devam Edin.";
+            Console.WriteLine(finalMessage);
+            Console.WriteLine($"Telegram Aktivasyon Kodunuz : {_telegramBotManager.ActvationCode}");
         }
 
         static JwtTokenModel GetToken(IClientService client)
