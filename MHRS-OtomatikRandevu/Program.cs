@@ -7,7 +7,6 @@ using MHRS_OtomatikRandevu.TelegramBotService;
 using MHRS_OtomatikRandevu.Urls;
 using MHRS_OtomatikRandevu.Utils;
 using System.Net;
-using System.Runtime;
 
 namespace MHRS_OtomatikRandevu
 {
@@ -22,7 +21,6 @@ namespace MHRS_OtomatikRandevu
         static DateTime TOKEN_END_DATE;
 
         static IClientService _client;
-
         static TelegramBotManager _telegramBotManager;
 
         static void Main(string[] args)
@@ -49,14 +47,13 @@ namespace MHRS_OtomatikRandevu
                 Console.WriteLine("Telegram Bot Api Keyinizi Girin:");
                 TelegramBotToken = Console.ReadLine();
 
-                
-
                 if (_telegramBotManager.TestApiKey(TelegramBotToken))
                 {
                     Console.Clear();
                     Console.WriteLine($"Bot Bulundu Ve Başlatıldı: {_telegramBotManager.GetBotUsername()}");
                     string finalMessage = $"Bot Kurulumu Başarılı.\n\nLÜTFEN BU PROGRAMI KAPATMAYIN!\n\nLütfen {TelegramUrls.BaseBotUrl}{_telegramBotManager.GetBotUsername()} Adresine Gidin Ve /start Mesajı İle Telegram Üzerinden Devam Edin.";
                     Console.WriteLine(finalMessage);
+                    Console.WriteLine($"Telegram Aktivasyon Kodunuz : {_telegramBotManager.ActvationCode}");
                     isValidApiKey = true; 
                 }
                 else
@@ -66,22 +63,9 @@ namespace MHRS_OtomatikRandevu
                 }
 
             }
-
-
-            //if (_telegramBotManager.TestApiKey(TelegramBotToken))
-            //{
-            //    //Console.WriteLine("Kurulum Başarılı.\n\nPROGRAMI KAPATMAYIN!\n\nLütfen /start Mesajı İle Telegram Üzerinden Devam Edin.");
-            //    string finalMessage = string.Format("Bot Kurulumu Başarılı.\n\nLÜTFEN BU PROGRAMI KAPATMAYIN!\n\nLütfen {0}{1} Adresine Gidin Ve /start Mesajı İle Telegram Üzerinden Devam Edin.",TelegramUrls.BaseBotUrl,_telegramBotManager.GetBotUsername());
-            //    Console.WriteLine(finalMessage);
-            //}
-            //else
-            //{
-            //    Console.WriteLine("Telegram Bot Api Keyinizi Girin:");
-            //}
-
-            
-
            
+            LocalDataManager.LocalDataManager.SaveData();
+            LocalDataManager.LocalDataManager.TestLoadData();
 
 
             /*

@@ -11,6 +11,7 @@ namespace MHRS_OtomatikRandevu.TelegramBotService
     {
         public TelegramBotClient telegramBotClient;
         string TelegramBotName = string.Empty;
+        public int ActvationCode = 0;
 
         public bool TestApiKey(string apiKey)
         {
@@ -25,9 +26,8 @@ namespace MHRS_OtomatikRandevu.TelegramBotService
                 if (telegramBotClient.TestApiAsync().Result)
                 {
                     var botInfo = telegramBotClient.GetMeAsync().Result;
-                    //Console.WriteLine($"Bot Bulundu Ve Başlatıldı: {botInfo.Username}");
-
                     TelegramBotName = botInfo.Username;
+                    CreateActivationCode();
                     result = true;
                 }
                 else
@@ -67,6 +67,12 @@ namespace MHRS_OtomatikRandevu.TelegramBotService
                 return botName;
             }
             
+        }
+
+        public void CreateActivationCode()
+        {
+            Random random = new Random();
+            ActvationCode = random.Next(100000, 999999);
         }
 
         
