@@ -24,6 +24,15 @@ namespace MHRS_OtomatikRandevu.Services
             return response;
         }
 
+        public async Task<ApiResponse<T>> GetAsync<T>(string baseUrl, string endpoint) where T : class
+        {
+            var response = await _client.GetFromJsonAsync<ApiResponse<T>>(string.Concat(baseUrl, endpoint));
+            if ((response.Warnings != null && response.Warnings.Any()) || (response.Errors != null && response.Errors.Any()))
+                return new ApiResponse<T>(); // Uyarılar veya hatalar varsa boş bir ApiResponse döndür
+
+            return response;
+        }
+
         public T GetSimple<T>(string baseUrl, string endpoint) where T : class
         {
             return _client.GetFromJsonAsync<T>(string.Concat(baseUrl, endpoint)).Result;

@@ -389,8 +389,9 @@ namespace MHRS_OtomatikRandevu.TelegramBotService
 
         public async void AskClinic(List<GenericResponseModel> ClinicList)
         {
-            int columns = 3;
-            int rows = (int)Math.Ceiling((double)ClinicList.Count / columns);
+
+            int columns = 1;
+            int rows = ClinicList.Count;
 
             InlineKeyboardButton[][] inlineKeyboard = new InlineKeyboardButton[rows][];
 
@@ -399,20 +400,11 @@ namespace MHRS_OtomatikRandevu.TelegramBotService
                 inlineKeyboard[row] = new InlineKeyboardButton[columns];
                 for (int col = 0; col < columns; col++)
                 {
-                    int index = row * columns + col;
-                    if (index < ClinicList.Count)
-                    {
-                        var item = ClinicList[index];
-                        string _buttonData = String.Format("clinic_{0}", (index + 1));
-                        inlineKeyboard[row][col] = InlineKeyboardButton.WithCallbackData(item.Text, _buttonData);
-                    }
-                    else
-                    {
-                        inlineKeyboard[row][col] = InlineKeyboardButton.WithCallbackData(" ", " "); // Boş buton
-                    }
+                    var item = ClinicList[row];
+                    string _buttonData = String.Format("clinic_{0}", (row + 1));                    
+                    inlineKeyboard[row][col] = InlineKeyboardButton.WithCallbackData(item.Text, _buttonData);
                 }
             }
-
 
             InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup(inlineKeyboard);
 
@@ -421,6 +413,39 @@ namespace MHRS_OtomatikRandevu.TelegramBotService
                 text: "Klinik Seçin:",
                 replyMarkup: inlineKeyboardMarkup,
                 cancellationToken: _cancelToken);
+
+            //int columns = 3;
+            //int rows = (int)Math.Ceiling((double)ClinicList.Count / columns);
+
+            //InlineKeyboardButton[][] inlineKeyboard = new InlineKeyboardButton[rows][];
+
+            //for (int row = 0; row < rows; row++)
+            //{
+            //    inlineKeyboard[row] = new InlineKeyboardButton[columns];
+            //    for (int col = 0; col < columns; col++)
+            //    {
+            //        int index = row * columns + col;
+            //        if (index < ClinicList.Count)
+            //        {
+            //            var item = ClinicList[index];
+            //            string _buttonData = String.Format("clinic_{0}", (index + 1));
+            //            inlineKeyboard[row][col] = InlineKeyboardButton.WithCallbackData(item.Text, _buttonData);
+            //        }
+            //        else
+            //        {
+            //            inlineKeyboard[row][col] = InlineKeyboardButton.WithCallbackData(" ", " "); // Boş buton
+            //        }
+            //    }
+            //}
+
+
+            //InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup(inlineKeyboard);
+
+            //Message sentMessage = await telegramBotClient.SendTextMessageAsync(
+            //    chatId: long.Parse(Program._localDataManager.credentials.AuthenticatedTelegramUserId),
+            //    text: "Klinik Seçin:",
+            //    replyMarkup: inlineKeyboardMarkup,
+            //    cancellationToken: _cancelToken);
         }
 
 
@@ -448,18 +473,8 @@ namespace MHRS_OtomatikRandevu.TelegramBotService
 
         private async Task BotOnCallbackQueryReceived(CallbackQuery callbackQuery, CancellationToken cancellationToken)
         {
-            Console.WriteLine("ID " + callbackQuery.From.Id);
+            //Console.WriteLine("ID " + callbackQuery.From.Id);
             Console.WriteLine("CallBack Data " + callbackQuery.Data);
-
-            //Regex.IsMatch(callbackQuery.Data, "^wh");
-
-            Console.WriteLine("Regex Match -province- : " + Regex.IsMatch(callbackQuery.Data, "^province"));
-            Console.WriteLine("Regex Match -akif- : " + Regex.IsMatch(callbackQuery.Data, "^akif"));
-
-            //string remainingText = callbackQuery.Data.Substring(9);
-
-            //Console.WriteLine("Remaining Text: " + remainingText);
-
 
             //string AnswerText = "";
             switch (callbackQuery.Data)
@@ -491,9 +506,15 @@ namespace MHRS_OtomatikRandevu.TelegramBotService
                     break;
                 case var str when Regex.IsMatch(str, "^district"):
                     Int32 district = Convert.ToInt32(str.Substring(9));
-                    Console.WriteLine("District: " + district);
-                    //DeleteMessage(callbackQuery.Message.Chat.Id, callbackQuery.Message.MessageId, cancellationToken);
+                    Console.WriteLine("Clicked District: " + district);
+                    DeleteMessage(callbackQuery.Message.Chat.Id, callbackQuery.Message.MessageId, cancellationToken);
                     Program.GetClinics(district);
+                    break;
+                case var str when Regex.IsMatch(str, "^clinic"):
+                    Int32 clinic = Convert.ToInt32(str.Substring(7));
+                    Console.WriteLine("Clicked Clinic: " + clinic);
+                    DeleteMessage(callbackQuery.Message.Chat.Id, callbackQuery.Message.MessageId, cancellationToken);
+                    //Program.GetClinics(district);
                     break;
 
                 default:
@@ -621,7 +642,7 @@ namespace MHRS_OtomatikRandevu.TelegramBotService
                     }
                     */
 
-                    string AnswerText = "Answer Comes Here";
+                    string AnswerText = "Başarılı";
 
             if (AnswerText.Length > 0)
             {
@@ -674,11 +695,11 @@ namespace MHRS_OtomatikRandevu.TelegramBotService
             try
             {
                 await telegramBotClient.DeleteMessageAsync(chatId, messageId, cancellationToken);
-                Console.WriteLine("Mesaj başarıyla silindi.");
+                //Console.WriteLine("Mesaj başarıyla silindi.");
             }
             catch (Exception ex)
             {
-                Console.WriteLine("Mesaj silinirken bir hata oluştu: " + ex.Message);
+                //Console.WriteLine("Mesaj silinirken bir hata oluştu: " + ex.Message);
             }
         }
 
