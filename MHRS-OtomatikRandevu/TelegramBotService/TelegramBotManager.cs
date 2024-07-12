@@ -11,6 +11,8 @@ using Telegram.Bot.Types.Enums;
 using Telegram.Bot.Types;
 using Telegram.Bot.Exceptions;
 using Telegram.Bot.Types.ReplyMarkups;
+using System.Threading;
+using MHRS_OtomatikRandevu.Models.ResponseModels;
 
 namespace MHRS_OtomatikRandevu.TelegramBotService
 {
@@ -22,7 +24,9 @@ namespace MHRS_OtomatikRandevu.TelegramBotService
         public int ActvationCode = 0;
         public string BotToken = string.Empty;
 
-
+        bool waitingForActivationCode = false;
+        bool waitingTCNumber = false;
+        bool waitingPassword = false;
 
         public bool TestApiKey(string apiKey)
         {
@@ -134,13 +138,30 @@ namespace MHRS_OtomatikRandevu.TelegramBotService
 
                 var chatId = message.Chat.Id;
 
-                Console.WriteLine($"Received a '{messageText}' message in chat {chatId}.");
-
-                /*
+                //Console.WriteLine($"Received a '{messageText}' message in chat {chatId}.");
+                
                 switch (messageText.ToLower(new CultureInfo("en-US")))
                 {
                     case "/start":
-                        
+                        //Console.WriteLine(Program._localDataManager.credentials.AuthenticatedTelegramUserId);
+                        if(Program._localDataManager.IsAuthenticated())
+                        {
+                            if(chatId.ToString() != Program._localDataManager.credentials.AuthenticatedTelegramUserId)
+                            {
+                                SendMessage("Bu Bot Sadece Bir Telegram Hesabı İle Kullanılabilmektedir! Yeni Kurulum İçin Bilgisayarınızdaki Programı Sıfırlayın", chatId);
+                            }
+                            else
+                            {
+                                SendMessage("Hoş Geldiniz\nGiriş Yapmak İçin MHRS TC Kimlik Numaranızı Girin:", chatId);
+                                waitingTCNumber = true;
+                            }
+                        }
+                        else
+                        {
+                            SendMessage("Lütfen Aktivasyon Kodunuzu Giriniz:", chatId);
+                            waitingForActivationCode = true;
+                        }
+
                         break;
                     case "/register":
                         
@@ -179,42 +200,85 @@ namespace MHRS_OtomatikRandevu.TelegramBotService
 
                         break;
                     default:
-
-
+                        if (waitingForActivationCode)
+                        {
+                            if (messageText == ActvationCode.ToString())
+                            {
+                                SendMessage("Aktivasyon Başarılı ✅", chatId);
+                                Program._localDataManager.SetAuthenticatedTelegramUserId(chatId.ToString());
+                                waitingForActivationCode = false;
+                            }
+                            else
+                            {
+                                SendMessage("Kod Hatalı Lütfen Tekrar Gönderin ⛔", chatId);
+                            }
+                        }
+                        else
+                        {
+                            if (chatId.ToString() != Program._localDataManager.credentials.AuthenticatedTelegramUserId)
+                            {
+                                SendMessage("Bu Bot Sadece Bir Telegram Hesabı İle Kullanılabilmektedir! Yeni Kurulum İçin Bilgisayarınızdaki Programı Sıfırlayın", chatId);
+                            }
+                            else
+                            {
+                                if (waitingTCNumber)
+                                {
+                                    if(messageText.ToString().Length != 11)
+                                    {
+                                        SendMessage("TC Kimlik Numarası 11 Haneli Olmalıdır. Lütfen Tekrar Girin ⛔", chatId);
+                                    }
+                                    else
+                                    {
+                                        Program.TC_NO = messageText;
+                                        waitingTCNumber = false;
+                                        waitingPassword = true;
+                                        SendMessage("MHRS Şifrenizi Girin:", chatId);
+                                    }
+                                }
+                                else if (waitingPassword)
+                                {
+                                    Program.SIFRE = messageText;
+                                    waitingPassword = false;
+                                    Program.LoginPhese();
+                                }
+                                else
+                                {
+                                    SendMessage(messageText + "Bilinmeyen Komut\nLütfen /start Komutu İle Başlayın.", chatId);
+                                }
+                             }
+                        }
                         break;
                 }
-                */
-
-                
-
-                if (messageText == "/start")
-                {
-
-                    InlineKeyboardMarkup inlineKeyboard = new(
-                     new[]
-                     {
-                        // first row
-                        new []
-                        {
-                            InlineKeyboardButton.WithCallbackData("1.1","13"),
-                            InlineKeyboardButton.WithCallbackData("1.2", "12"),
-                        },
-                        // second row
-                        new []
-                        {
-                            InlineKeyboardButton.WithCallbackData("2.1", "21"),
-                            InlineKeyboardButton.WithCallbackData("2.2", "22"),
-                        },
-                     });
 
 
-                    Message sentMessage = await botClient.SendTextMessageAsync(
-                        chatId: chatId,
-                        text: "A message with an inline keyboard markup",
-                        replyMarkup: inlineKeyboard,
-                        cancellationToken: cancellationToken);
 
-                }
+                //if (messageText == "/start")
+                //{
+
+                //    InlineKeyboardMarkup inlineKeyboard = new(
+                //     new[]
+                //     {
+                //        // first row
+                //        new []
+                //        {
+                //            InlineKeyboardButton.WithCallbackData("1.1","13"),
+                //            InlineKeyboardButton.WithCallbackData("1.2", "12"),
+                //        },
+                //        // second row
+                //        new []
+                //        {
+                //            InlineKeyboardButton.WithCallbackData("2.1", "21"),
+                //            InlineKeyboardButton.WithCallbackData("2.2", "22"),
+                //        },
+                //     });
+
+
+                //    Message sentMessage = await botClient.SendTextMessageAsync(
+                //        chatId: chatId,
+                //        text: "A message with an inline keyboard markup",
+                //        replyMarkup: inlineKeyboard,
+                //        cancellationToken: cancellationToken);
+                //}
 
 
 
@@ -226,6 +290,54 @@ namespace MHRS_OtomatikRandevu.TelegramBotService
                 //    cancellationToken: cancellationToken);
             }
 
+        }
+
+        public async void AskProvince(List<GenericResponseModel> provinceList)
+        {
+            int columns = 3;
+            int rows = (int)Math.Ceiling((double)provinceList.Count / columns);
+
+         
+            InlineKeyboardButton[][] inlineKeyboard = new InlineKeyboardButton[rows][];
+
+            for (int row = 0; row < rows; row++)
+            {         
+                inlineKeyboard[row] = new InlineKeyboardButton[columns];
+                for (int col = 0; col < columns; col++)
+                {
+                    int index = row * columns + col;
+                    if (index < provinceList.Count)
+                    {
+                        var item = provinceList[index];
+                        string _buttonData = String.Format("province_{0}", (index+1));
+                        inlineKeyboard[row][col] = InlineKeyboardButton.WithCallbackData(item.Text, _buttonData);
+                    }
+                    else
+                    {
+                        inlineKeyboard[row][col] = InlineKeyboardButton.WithCallbackData(" ", " "); // Boş buton
+                    }
+                }
+            }
+
+            
+            InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup(inlineKeyboard);
+
+            Message sentMessage = await telegramBotClient.SendTextMessageAsync(
+                chatId: long.Parse(Program._localDataManager.credentials.AuthenticatedTelegramUserId),
+                text: "Randevu Almak İstediğiniz İli Seçin:",
+                replyMarkup: inlineKeyboardMarkup,
+                cancellationToken: _cancelToken);
+
+            //SendMessage("Listeden Randevu Almak İstediğiniz İli Seçin", long.Parse(Program._localDataManager.credentials.AuthenticatedTelegramUserId));
+        }
+
+        public void WrongPasswordOrIdEntered()
+        {
+            SendMessage("Hatalı TC Kimlik Numarası veya Şifre Girdiniz. Lütfen Tekrar Deneyin.", long.Parse(Program._localDataManager.credentials.AuthenticatedTelegramUserId));
+            SendMessage("MHRS TC Kimlik Numaranızı Girin:", long.Parse(Program._localDataManager.credentials.AuthenticatedTelegramUserId));
+
+            waitingTCNumber = true;
+            waitingPassword = false;
         }
 
         Task HandlePollingErrorAsync(ITelegramBotClient botClient, Exception exception, CancellationToken cancellationToken)

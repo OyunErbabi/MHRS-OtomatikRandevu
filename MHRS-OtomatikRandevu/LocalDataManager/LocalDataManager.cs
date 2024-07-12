@@ -6,12 +6,11 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-
-
 public class Credentials
 {
     public string TelegramApiKey { get; set; }
     public string AuthenticatedTelegramUserId { get; set; }
+    public string TokenData { get; set; }
 }
 
 public class LocalDataManager
@@ -22,8 +21,9 @@ public class LocalDataManager
     {
         credentials = new Credentials
         {
-            TelegramApiKey = "NULL",
-            AuthenticatedTelegramUserId = "NULL"
+            TelegramApiKey = "",
+            AuthenticatedTelegramUserId = "",
+            TokenData = ""
         };
 
         LoadData();
@@ -71,6 +71,24 @@ public class LocalDataManager
         {
             Console.WriteLine("Hata: " + ex.Message);
         }
+    }
+
+    public bool IsAuthenticated()
+    {
+        if(credentials.AuthenticatedTelegramUserId.ToLower() == "null")
+        {
+            return false;
+        }
+        else
+        {
+            return true;
+        }
+    }
+
+    public void SetAuthenticatedTelegramUserId(string userId)
+    {
+        credentials.AuthenticatedTelegramUserId = userId;
+        SaveData();
     }
 
 }

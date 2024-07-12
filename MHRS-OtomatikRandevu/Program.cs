@@ -12,17 +12,19 @@ namespace MHRS_OtomatikRandevu
 {
     public class Program
     {
-        static string TC_NO;
-        static string SIFRE;
+        public static string TC_NO;
+        public static string SIFRE;
         static string TelegramBotToken;
 
         const string TOKEN_FILE_NAME = "token.txt";
-        
+        static string JWT_TOKEN;
         static DateTime TOKEN_END_DATE;
 
         static IClientService _client;
         static TelegramBotManager _telegramBotManager;
         public static LocalDataManager _localDataManager;
+
+        public static List<GenericResponseModel> provinceList;
 
         static void Main(string[] args)
         {
@@ -80,36 +82,12 @@ namespace MHRS_OtomatikRandevu
             }
            
             _localDataManager.SaveData();
-            _localDataManager.LoadData();
 
 
+
+
+           
             /*
-            #region Giriş Yap Bölümü
-            do
-            {
-                Console.Clear();
-                Console.WriteLine("MHRS Otomatik Randevu Sistemine Hoşgeldiniz.\nLütfen giriş yapmak için bilgilerinizi giriniz.");
-
-                Console.Write("TC: ");
-                TC_NO = Console.ReadLine();
-
-                Console.Write("Şifre: ");
-                SIFRE = Console.ReadLine();
-
-                Console.WriteLine("Giriş Yapılıyor...");
-
-                var tokenData = GetToken(_client);
-                if (tokenData == null || string.IsNullOrEmpty(tokenData.Token))
-                    continue;
-
-                JWT_TOKEN = tokenData.Token;
-                TOKEN_END_DATE = tokenData.Expiration;
-
-                _client.AddOrUpdateAuthorizationHeader(JWT_TOKEN);
-
-            } while (string.IsNullOrEmpty(JWT_TOKEN));
-            #endregion
-
             #region İl Seçim Bölümü
             int provinceIndex;
             var provinceListResponse = _client.GetSimple<List<GenericResponseModel>>(MHRSUrls.BaseUrl, MHRSUrls.GetProvinces);
@@ -118,7 +96,7 @@ namespace MHRS_OtomatikRandevu
                 ConsoleUtil.WriteText("Bir hata meydana geldi!", 2000);
                 return;
             }
-            var provinceList = provinceListResponse
+            provinceList = provinceListResponse
                                     .DistinctBy(x => x.Value)
                                     .OrderBy(x => x.Value)
                                     .ToList();
@@ -156,7 +134,7 @@ namespace MHRS_OtomatikRandevu
             provinceIndex = provinceList[provinceIndex - 1].Value;
 
             #endregion
-
+            /*
             #region İlçe Seçim Bölümü
             int districtIndex;
             var districtList = _client.GetSimple<List<GenericResponseModel>>(MHRSUrls.BaseUrl, string.Format(MHRSUrls.GetDistricts, provinceIndex));
@@ -409,26 +387,55 @@ namespace MHRS_OtomatikRandevu
             Console.WriteLine($"Telegram Aktivasyon Kodunuz : {_telegramBotManager.ActvationCode}");
         }
 
+        public static void LoginPhese()
+        {
+            var tokenData = GetToken(_client);
+            if (tokenData == null || string.IsNullOrEmpty(tokenData.Token))
+            {
+                _telegramBotManager.WrongPasswordOrIdEntered();
+            }
+            else
+            {
+                JWT_TOKEN = tokenData.Token;
+                TOKEN_END_DATE = tokenData.Expiration;
+
+                _client.AddOrUpdateAuthorizationHeader(JWT_TOKEN);
+                GetAllGetProvinces();
+            }
+             
+        }
+
+        static void GetAllGetProvinces()
+        {
+            int provinceIndex;
+            var provinceListResponse = _client.GetSimple<List<GenericResponseModel>>(MHRSUrls.BaseUrl, MHRSUrls.GetProvinces);
+            if (provinceListResponse == null || !provinceListResponse.Any())
+            {
+                ConsoleUtil.WriteText("Bir hata meydana geldi!", 2000);
+                return;
+            }
+            provinceList = provinceListResponse
+                                    .DistinctBy(x => x.Value)
+                                    .OrderBy(x => x.Value)
+                                    .ToList();
+            _telegramBotManager.AskProvince(provinceList);
+        }
+
         static JwtTokenModel GetToken(IClientService client)
         {
-            var rawPath = string.Empty;
-            var tokenFilePath = string.Empty;
+            //Console.WriteLine("Getting Token");
+            var tokenData = _localDataManager.credentials.TokenData;
             try
-            {
-                rawPath = Directory.GetCurrentDirectory()
-                    .Split("\\bin\\")
-                    .SkipLast(1)
-                    .FirstOrDefault();
-                tokenFilePath = Path.Combine(rawPath, TOKEN_FILE_NAME);
-
-                var tokenData = File.ReadAllText(tokenFilePath);
+            {   
+                tokenData = _localDataManager.credentials.TokenData;
                 if (string.IsNullOrEmpty(tokenData) || JwtTokenUtil.GetTokenExpireTime(tokenData) < DateTime.Now)
                     throw new Exception();
-
+                //Console.WriteLine("Token ile giriş yapıldı");
                 return new() { Token = tokenData, Expiration = JwtTokenUtil.GetTokenExpireTime(tokenData) };
             }
             catch (Exception)
             {
+                //Console.WriteLine("Token geçersiz yenisi oluşturuluyor");
                 var loginRequestModel = new LoginRequestModel
                 {
                     KullaniciAdi = TC_NO,
@@ -438,15 +445,57 @@ namespace MHRS_OtomatikRandevu
                 var loginResponse = client.Post<LoginResponseModel>(MHRSUrls.BaseUrl, MHRSUrls.Login, loginRequestModel).Result;
                 if (loginResponse.Data == null || (loginResponse.Data != null && string.IsNullOrEmpty(loginResponse.Data?.Jwt)))
                 {
-                    ConsoleUtil.WriteText("Giriş yapılırken bir hata meydana geldi!", 2000);
+                    //ConsoleUtil.WriteText("Giriş yapılırken bir hata meydana geldi!", 2000);
                     return null;
                 }
 
-                if(!string.IsNullOrEmpty(tokenFilePath))
-                    File.WriteAllText(tokenFilePath, loginResponse.Data!.Jwt);
-
+                if (!string.IsNullOrEmpty(tokenData))
+                {
+                    _localDataManager.credentials.TokenData = loginResponse.Data!.Jwt;
+                    _localDataManager.SaveData();
+                }
                 return new() { Token = loginResponse.Data!.Jwt, Expiration = JwtTokenUtil.GetTokenExpireTime(loginResponse.Data!.Jwt) };
             }
+
+            
+
+
+            //var rawPath = string.Empty;
+            //var tokenFilePath = string.Empty;
+            //try
+            //{
+            //    rawPath = Directory.GetCurrentDirectory()
+            //        .Split("\\bin\\")
+            //        .SkipLast(1)
+            //        .FirstOrDefault();
+            //    tokenFilePath = Path.Combine(rawPath, TOKEN_FILE_NAME);
+
+            //    var tokenData = File.ReadAllText(tokenFilePath);
+            //    if (string.IsNullOrEmpty(tokenData) || JwtTokenUtil.GetTokenExpireTime(tokenData) < DateTime.Now)
+            //        throw new Exception();
+
+            //    return new() { Token = tokenData, Expiration = JwtTokenUtil.GetTokenExpireTime(tokenData) };
+            //}
+            //catch (Exception)
+            //{
+            //    var loginRequestModel = new LoginRequestModel
+            //    {
+            //        KullaniciAdi = TC_NO,
+            //        Parola = SIFRE
+            //    };
+
+            //    var loginResponse = client.Post<LoginResponseModel>(MHRSUrls.BaseUrl, MHRSUrls.Login, loginRequestModel).Result;
+            //    if (loginResponse.Data == null || (loginResponse.Data != null && string.IsNullOrEmpty(loginResponse.Data?.Jwt)))
+            //    {
+            //        ConsoleUtil.WriteText("Giriş yapılırken bir hata meydana geldi!", 2000);
+            //        return null;
+            //    }
+
+            //    if (!string.IsNullOrEmpty(tokenFilePath))
+            //        File.WriteAllText(tokenFilePath, loginResponse.Data!.Jwt);
+
+            //    return new() { Token = loginResponse.Data!.Jwt, Expiration = JwtTokenUtil.GetTokenExpireTime(loginResponse.Data!.Jwt) };
+            //}
         }
 
         //Aynı gün içerisinde tek slot mevcut ise o slotu bulur
@@ -490,5 +539,6 @@ namespace MHRS_OtomatikRandevu
 
             return true;
         }
+
     }
 }
