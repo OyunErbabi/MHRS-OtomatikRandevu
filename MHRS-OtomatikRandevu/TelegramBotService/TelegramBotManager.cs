@@ -331,6 +331,99 @@ namespace MHRS_OtomatikRandevu.TelegramBotService
             //SendMessage("Listeden Randevu Almak İstediğiniz İli Seçin", long.Parse(Program._localDataManager.credentials.AuthenticatedTelegramUserId));
         }
 
+        public async void AskIstanbulLocation()
+        {
+            InlineKeyboardButton[][] inlineKeyboard = new InlineKeyboardButton[3][];
+            inlineKeyboard[0] = new InlineKeyboardButton[] { InlineKeyboardButton.WithCallbackData("İSTANBUL", "ist_340") };
+            inlineKeyboard[1] = new InlineKeyboardButton[] { InlineKeyboardButton.WithCallbackData("İSTANBUL AVRUPA", "ist_341") };
+            inlineKeyboard[2] = new InlineKeyboardButton[] { InlineKeyboardButton.WithCallbackData("İSTANBUL ANADOLU", "ist_342") };
+
+            InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup(inlineKeyboard);
+
+            Message sentMessage = await telegramBotClient.SendTextMessageAsync(
+                chatId: long.Parse(Program._localDataManager.credentials.AuthenticatedTelegramUserId),
+                text: "İstanbul İçin Kıta Seçin:",
+                replyMarkup: inlineKeyboardMarkup,
+                cancellationToken: _cancelToken);
+        }
+
+        public async void AskDistrict(List<GenericResponseModel> districtList)
+        {
+            
+            districtList.Insert(0, new GenericResponseModel { Text = "FARKETMEZ" });
+
+            int columns = 3;
+            int rows = (int)Math.Ceiling((double)districtList.Count / columns);
+
+            
+            InlineKeyboardButton[][] inlineKeyboard = new InlineKeyboardButton[rows][];
+
+            for (int row = 0; row < rows; row++)
+            {
+                inlineKeyboard[row] = new InlineKeyboardButton[columns];
+                for (int col = 0; col < columns; col++)
+                {
+                    int index = row * columns + col;
+                    if (index < districtList.Count)
+                    {
+                        var item = districtList[index];
+                        string _buttonData = String.Format("district_{0}", index); // Index doğrudan kullanılıyor
+                        inlineKeyboard[row][col] = InlineKeyboardButton.WithCallbackData(item.Text, _buttonData);
+                    }
+                    else
+                    {
+                        inlineKeyboard[row][col] = InlineKeyboardButton.WithCallbackData(" ", " "); // Boş buton
+                    }
+                }
+            }
+
+
+            InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup(inlineKeyboard);
+
+            Message sentMessage = await telegramBotClient.SendTextMessageAsync(
+                chatId: long.Parse(Program._localDataManager.credentials.AuthenticatedTelegramUserId),
+                text: "Randevu Almak İstediğiniz İlçeyi Seçin:",
+                replyMarkup: inlineKeyboardMarkup,
+                cancellationToken: _cancelToken);
+        }
+
+        public async void AskClinic(List<GenericResponseModel> ClinicList)
+        {
+            int columns = 3;
+            int rows = (int)Math.Ceiling((double)ClinicList.Count / columns);
+
+            InlineKeyboardButton[][] inlineKeyboard = new InlineKeyboardButton[rows][];
+
+            for (int row = 0; row < rows; row++)
+            {
+                inlineKeyboard[row] = new InlineKeyboardButton[columns];
+                for (int col = 0; col < columns; col++)
+                {
+                    int index = row * columns + col;
+                    if (index < ClinicList.Count)
+                    {
+                        var item = ClinicList[index];
+                        string _buttonData = String.Format("clinic_{0}", (index + 1));
+                        inlineKeyboard[row][col] = InlineKeyboardButton.WithCallbackData(item.Text, _buttonData);
+                    }
+                    else
+                    {
+                        inlineKeyboard[row][col] = InlineKeyboardButton.WithCallbackData(" ", " "); // Boş buton
+                    }
+                }
+            }
+
+
+            InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup(inlineKeyboard);
+
+            Message sentMessage = await telegramBotClient.SendTextMessageAsync(
+                chatId: long.Parse(Program._localDataManager.credentials.AuthenticatedTelegramUserId),
+                text: "Klinik Seçin:",
+                replyMarkup: inlineKeyboardMarkup,
+                cancellationToken: _cancelToken);
+        }
+
+
         public void WrongPasswordOrIdEntered()
         {
             SendMessage("Hatalı TC Kimlik Numarası veya Şifre Girdiniz. Lütfen Tekrar Deneyin.", long.Parse(Program._localDataManager.credentials.AuthenticatedTelegramUserId));
@@ -358,129 +451,177 @@ namespace MHRS_OtomatikRandevu.TelegramBotService
             Console.WriteLine("ID " + callbackQuery.From.Id);
             Console.WriteLine("CallBack Data " + callbackQuery.Data);
 
+            //Regex.IsMatch(callbackQuery.Data, "^wh");
 
-            /*
-            bool timeDataSelected = false;
-            UserConfig _userConfig = new UserConfig();
-            _userConfig.UserId = callbackQuery.From.Id;
+            Console.WriteLine("Regex Match -province- : " + Regex.IsMatch(callbackQuery.Data, "^province"));
+            Console.WriteLine("Regex Match -akif- : " + Regex.IsMatch(callbackQuery.Data, "^akif"));
 
-            string AnswerText = "";
+            //string remainingText = callbackQuery.Data.Substring(9);
+
+            //Console.WriteLine("Remaining Text: " + remainingText);
+
+
+            //string AnswerText = "";
             switch (callbackQuery.Data)
             {
-                case var str when Regex.IsMatch(str, "^wh"):
+                case var str when Regex.IsMatch(str, "^province"):
 
-
-                    if (str.StartsWith("wh_"))
+                    if (str.StartsWith("province_"))
                     {
-                        string remainingText = str.Substring(3);
+                        string remainingText = str.Substring(9);
 
-                        if (remainingText == "save")
+                        if (remainingText == "34")
                         {
-                            AnswerText = "👍 Save Successful";
-                            DeleteMessage(callbackQuery);
-                            UserActions.SetWorkTime(_userConfig.UserId.ToString());
+                            DeleteMessage(callbackQuery.Message.Chat.Id, callbackQuery.Message.MessageId, cancellationToken);
+                            AskIstanbulLocation();
                         }
                         else
                         {
-                            AnswerText = "Warehouse Selected";
-                            UserActions.UpdateServiceAreaList(_userConfig.UserId.ToString(), remainingText, callbackQuery);
-                        }
-                    }
-
-                    break;
-                case var str when Regex.IsMatch(str, "^tz"):
-                    Console.WriteLine("Metin 'tz' ile başlıyor.");
-                    // 'tz' ile başlayan metin için yapılacak işlemler
-                    break;
-                case var str when Regex.IsMatch(str, "^wt"):
-
-                    if (str.StartsWith("wt_"))
-                    {
-                        string workTimeText = str.Substring(3);
-
-                        if (workTimeText == "save")
-                        {
-                            AnswerText = "👍 Save Successful";
-                            DeleteMessage(callbackQuery);
-                            UserActions.SetMinimumWorkStartTime(_userConfig.UserId.ToString());
-                        }
-                        else
-                        {
-                            AnswerText = "WorkTime Selected";
-                            UserActions.UpdateWorktime(_userConfig.UserId.ToString(), workTimeText, callbackQuery);
-                        }
-                    }
-
-
-                    break;
-                case var str when Regex.IsMatch(str, "^mt"):
-
-                    if (str.StartsWith("mt_"))
-                    {
-                        string workTimeText = str.Substring(3);
-
-                        if (workTimeText == "save")
-                        {
-                            AnswerText = "👍 Save Successful";
-                            DeleteMessage(callbackQuery);
-                            //UserActions.SetMinimumWorkStartTime(_userConfig.UserId.ToString());
-                        }
-                        else
-                        {
-                            AnswerText = "WorkTime Selected";
-                            //UserActions.UpdateWorktime(_userConfig.UserId.ToString(), workTimeText, callbackQuery);
+                            Int32 province = Convert.ToInt32(remainingText);
+                            DeleteMessage(callbackQuery.Message.Chat.Id, callbackQuery.Message.MessageId, cancellationToken);
+                            Program.GetDistricts(province);
                         }
                     }
                     break;
-
+                case var str when Regex.IsMatch(str, "^ist"):
+                    Int32 subProvince = Convert.ToInt32(str.Substring(4));
+                    Console.WriteLine("SubProvince: " + subProvince);
+                    DeleteMessage(callbackQuery.Message.Chat.Id, callbackQuery.Message.MessageId, cancellationToken);
+                    Program.GetDistricts(subProvince);
+                    break;
+                case var str when Regex.IsMatch(str, "^district"):
+                    Int32 district = Convert.ToInt32(str.Substring(9));
+                    Console.WriteLine("District: " + district);
+                    //DeleteMessage(callbackQuery.Message.Chat.Id, callbackQuery.Message.MessageId, cancellationToken);
+                    Program.GetClinics(district);
+                    break;
 
                 default:
+                    break;
+            }
+
+                    /*
+                    bool timeDataSelected = false;
+                    UserConfig _userConfig = new UserConfig();
+                    _userConfig.UserId = callbackQuery.From.Id;
+                    */
+                    /*
+                    string AnswerText = "";
                     switch (callbackQuery.Data)
                     {
-                        case string data when data.Contains("PDT"):
-                            _userConfig.TimeZone = UserTimeZone.PDT;
-                            timeDataSelected = true;
-                            //Console.WriteLine("PDT SELECTED!");
-                            UserActions.UpdateUserConfig(_userConfig);
-                            DeleteMessage(callbackQuery);
+                        case var str when Regex.IsMatch(str, "^wh"):
+
+                            if (str.StartsWith("wh_"))
+                            {
+                                string remainingText = str.Substring(3);
+
+                                if (remainingText == "save")
+                                {
+                                    AnswerText = "👍 Save Successful";
+                                    DeleteMessage(callbackQuery);
+                                    UserActions.SetWorkTime(_userConfig.UserId.ToString());
+                                }
+                                else
+                                {
+                                    AnswerText = "Warehouse Selected";
+                                    UserActions.UpdateServiceAreaList(_userConfig.UserId.ToString(), remainingText, callbackQuery);
+                                }
+                            }
+
+                            break;
+                        case var str when Regex.IsMatch(str, "^tz"):
+                            Console.WriteLine("Metin 'tz' ile başlıyor.");
+                            // 'tz' ile başlayan metin için yapılacak işlemler
+                            break;
+                        case var str when Regex.IsMatch(str, "^wt"):
+
+                            if (str.StartsWith("wt_"))
+                            {
+                                string workTimeText = str.Substring(3);
+
+                                if (workTimeText == "save")
+                                {
+                                    AnswerText = "👍 Save Successful";
+                                    DeleteMessage(callbackQuery);
+                                    UserActions.SetMinimumWorkStartTime(_userConfig.UserId.ToString());
+                                }
+                                else
+                                {
+                                    AnswerText = "WorkTime Selected";
+                                    UserActions.UpdateWorktime(_userConfig.UserId.ToString(), workTimeText, callbackQuery);
+                                }
+                            }
+
+
+                            break;
+                        case var str when Regex.IsMatch(str, "^mt"):
+
+                            if (str.StartsWith("mt_"))
+                            {
+                                string workTimeText = str.Substring(3);
+
+                                if (workTimeText == "save")
+                                {
+                                    AnswerText = "👍 Save Successful";
+                                    DeleteMessage(callbackQuery);
+                                    //UserActions.SetMinimumWorkStartTime(_userConfig.UserId.ToString());
+                                }
+                                else
+                                {
+                                    AnswerText = "WorkTime Selected";
+                                    //UserActions.UpdateWorktime(_userConfig.UserId.ToString(), workTimeText, callbackQuery);
+                                }
+                            }
                             break;
 
-                        case string data when data.Contains("MDT"):
-                            _userConfig.TimeZone = UserTimeZone.MDT;
-                            timeDataSelected = true;
-                            //Console.WriteLine("MDT SELECTED!");
-                            UserActions.UpdateUserConfig(_userConfig);
-                            DeleteMessage(callbackQuery);
+
+                        default:
+                            switch (callbackQuery.Data)
+                            {
+                                case string data when data.Contains("PDT"):
+                                    _userConfig.TimeZone = UserTimeZone.PDT;
+                                    timeDataSelected = true;
+                                    //Console.WriteLine("PDT SELECTED!");
+                                    UserActions.UpdateUserConfig(_userConfig);
+                                    DeleteMessage(callbackQuery);
+                                    break;
+
+                                case string data when data.Contains("MDT"):
+                                    _userConfig.TimeZone = UserTimeZone.MDT;
+                                    timeDataSelected = true;
+                                    //Console.WriteLine("MDT SELECTED!");
+                                    UserActions.UpdateUserConfig(_userConfig);
+                                    DeleteMessage(callbackQuery);
+                                    break;
+
+                                case string data when data.Contains("CDT"):
+                                    _userConfig.TimeZone = UserTimeZone.CDT;
+                                    timeDataSelected = true;
+                                    //Console.WriteLine("CDT SELECTED!");
+                                    UserActions.UpdateUserConfig(_userConfig);
+                                    DeleteMessage(callbackQuery);
+                                    break;
+
+                                case string data when data.Contains("EDT"):
+                                    _userConfig.TimeZone = UserTimeZone.EDT;
+                                    timeDataSelected = true;
+                                    //Console.WriteLine("EDT SELECTED!");
+                                    UserActions.UpdateUserConfig(_userConfig);
+                                    DeleteMessage(callbackQuery);
+                                    break;
+
+                                    //await botClient.DeleteMessageAsync(
+                                    //chatId: callbackQuery.From.Id,
+                                    //messageId: callbackQuery.Message.MessageId,
+                                    //cancellationToken: cancellationToken
+                                    //);
+                            }
                             break;
 
-                        case string data when data.Contains("CDT"):
-                            _userConfig.TimeZone = UserTimeZone.CDT;
-                            timeDataSelected = true;
-                            //Console.WriteLine("CDT SELECTED!");
-                            UserActions.UpdateUserConfig(_userConfig);
-                            DeleteMessage(callbackQuery);
-                            break;
-
-                        case string data when data.Contains("EDT"):
-                            _userConfig.TimeZone = UserTimeZone.EDT;
-                            timeDataSelected = true;
-                            //Console.WriteLine("EDT SELECTED!");
-                            UserActions.UpdateUserConfig(_userConfig);
-                            DeleteMessage(callbackQuery);
-                            break;
-
-                            //await botClient.DeleteMessageAsync(
-                            //chatId: callbackQuery.From.Id,
-                            //messageId: callbackQuery.Message.MessageId,
-                            //cancellationToken: cancellationToken
-                            //);
                     }
-                    break;
+                    */
 
-            }
-            */
-
-            string AnswerText = "Answer Comes Here";
+                    string AnswerText = "Answer Comes Here";
 
             if (AnswerText.Length > 0)
             {

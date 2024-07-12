@@ -6,6 +6,7 @@ using MHRS_OtomatikRandevu.Services.Abstracts;
 using MHRS_OtomatikRandevu.TelegramBotService;
 using MHRS_OtomatikRandevu.Urls;
 using MHRS_OtomatikRandevu.Utils;
+using Microsoft.IdentityModel.Tokens;
 using System.Net;
 
 namespace MHRS_OtomatikRandevu
@@ -23,8 +24,14 @@ namespace MHRS_OtomatikRandevu
         static IClientService _client;
         static TelegramBotManager _telegramBotManager;
         public static LocalDataManager _localDataManager;
-
         public static List<GenericResponseModel> provinceList;
+        public static List<GenericResponseModel> districtList;
+        public static List<GenericResponseModel> clinicList;
+
+        static Int32 provinceIndex;
+        static Int32 districtIndex;
+        static Int32 clinicIndex;
+
 
         static void Main(string[] args)
         {
@@ -420,6 +427,162 @@ namespace MHRS_OtomatikRandevu
                                     .ToList();
             _telegramBotManager.AskProvince(provinceList);
         }
+
+        public static void GetDistricts(int _provinceIndex)
+        {
+            if(provinceList.IsNullOrEmpty())
+            {
+                return;
+            }
+
+            //_provinceIndex = provinceList[provinceIndex - 1].Value;
+            
+            provinceIndex = _provinceIndex;
+
+
+            int districtIndex;
+            districtList = _client.GetSimple<List<GenericResponseModel>>(MHRSUrls.BaseUrl, string.Format(MHRSUrls.GetDistricts, provinceIndex));
+            if (districtList == null || !districtList.Any())
+            {
+                ConsoleUtil.WriteText("Bir hata meydana geldi!", 2000);
+                return;
+            }
+
+            _telegramBotManager.AskDistrict(districtList);
+
+            /*
+            do
+            {
+                Console.Clear();
+                Console.WriteLine("-------------------------------------------");
+                Console.WriteLine("0-FARKETMEZ");
+                for (int i = 0; i < districtList.Count; i++)
+                {
+                    Console.WriteLine($"{i + 1}-{districtList[i].Text}");
+                }
+                Console.WriteLine("-------------------------------------------");
+                Console.Write("İlçe Numarası Giriniz: ");
+                districtIndex = Convert.ToInt32(Console.ReadLine()); ;
+
+            } while (districtIndex < 0 || districtIndex > districtList.Count);
+
+            if (districtIndex != 0)
+                districtIndex = districtList[districtIndex - 1].Value;
+            else
+                districtIndex = -1;
+            */
+        }
+
+        
+        public static async void GetClinics(Int32 district)
+        {
+            districtIndex = district;
+
+            //if(districtList.IsNullOrEmpty())
+            //{
+            //    return;
+            //}
+
+            if (districtIndex != 0)
+                districtIndex = districtList[districtIndex - 1].Value;
+            else
+                districtIndex = -1;
+
+            int clinicIndex;
+            var clinicListResponse = _client.Get<List<GenericResponseModel>>(MHRSUrls.BaseUrl, string.Format(MHRSUrls.GetClinics, provinceIndex, districtIndex));
+            if (!clinicListResponse.Success && (clinicListResponse.Data == null || !clinicListResponse.Data.Any()))
+            {
+                ConsoleUtil.WriteText("Bir hata meydana geldi!", 2000);
+                return;
+            }
+            var clinicList = clinicListResponse.Data;
+
+
+            clinicList = clinicListResponse.Data;
+            //Console.WriteLine("Clinic List: " + clinicList.Count);
+
+            //_telegramBotManager.AskClinic(clinicList);
+
+            do
+            {
+                Console.Clear();
+                Console.WriteLine("-------------------------------------------");
+                for (int i = 0; i < clinicList.Count; i++)
+                {
+                    Console.WriteLine($"{i + 1}-{clinicList[i].Text}");
+                }
+                Console.WriteLine("-------------------------------------------");
+                Console.Write("Klinik Numarası Giriniz: ");
+                clinicIndex = Convert.ToInt32(Console.ReadLine()); ;
+
+            } while (clinicIndex < 1 || clinicIndex > clinicList.Count);
+            clinicIndex = clinicList[clinicIndex - 1].Value;
+
+
+            //do
+            //{
+            //    Console.Clear();
+            //    Console.WriteLine("-------------------------------------------");
+            //    for (int i = 0; i < clinicList.Count; i++)
+            //    {
+            //        Console.WriteLine($"{i + 1}-{clinicList[i].Text}");
+            //    }
+            //    Console.WriteLine("-------------------------------------------");
+            //    Console.Write("Klinik Numarası Giriniz: ");
+            //    clinicIndex = Convert.ToInt32(Console.ReadLine()); ;
+
+            //} while (clinicIndex < 1 || clinicIndex > clinicList.Count);
+            //clinicIndex = clinicList[clinicIndex - 1].Value;
+        }
+        
+
+        /*
+        public static void GetClinics(int district)
+        {
+            Console.WriteLine("Klinikler Getiriliyor");
+            districtIndex = district;
+            int clinicIndex;
+            clinicList = new List<GenericResponseModel>();
+
+            Console.WriteLine("District Index: " + districtIndex);
+            Console.WriteLine("Province Index: " + provinceIndex);
+
+            //var clinicListResponse = await _client.GetAsync<List<GenericResponseModel>>(MHRSUrls.BaseUrl, string.Format(MHRSUrls.GetClinics, provinceIndex, districtIndex));
+            var clinicListResponse =  _client.Get<List<GenericResponseModel>>(MHRSUrls.BaseUrl, string.Format(MHRSUrls.GetClinics, 39, 4));
+
+            if (!clinicListResponse.Success || clinicListResponse.Data == null || !clinicListResponse.Data.Any())
+            {
+                //ConsoleUtil.WriteText("Bir hata meydana geldi!", 2000);
+                Console.WriteLine("Hata: " + clinicListResponse.Infos);
+                return;
+            }
+
+            do
+            {
+                Console.Clear();
+                Console.WriteLine("-------------------------------------------");
+                for (int i = 0; i < clinicList.Count; i++)
+                {
+                    Console.WriteLine($"{i + 1}-{clinicList[i].Text}");
+                }
+                Console.WriteLine("-------------------------------------------");
+                Console.Write("Klinik Numarası Giriniz: ");
+                clinicIndex = Convert.ToInt32(Console.ReadLine()); ;
+
+            } while (clinicIndex < 1 || clinicIndex > clinicList.Count);
+
+            foreach (var item in clinicListResponse.Data)
+            {
+                Console.WriteLine("Clinic: " + item.Text);
+                Console.WriteLine("Clinic Value: " + item.Value);
+            }
+
+            clinicList = clinicListResponse.Data;
+            Console.WriteLine("Clinic List: " + clinicList.Count);
+
+            _telegramBotManager.AskClinic(clinicList);
+        }
+        */
 
         static JwtTokenModel GetToken(IClientService client)
         {
