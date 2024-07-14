@@ -27,6 +27,7 @@ namespace MHRS_OtomatikRandevu
         public static List<GenericResponseModel> provinceList;
         public static List<GenericResponseModel> districtList;
         public static List<GenericResponseModel> clinicList;
+        public static List<GenericResponseModel> hospitalList;
 
         static Int32 provinceIndex;
         static Int32 districtIndex;
@@ -434,6 +435,9 @@ namespace MHRS_OtomatikRandevu
             //_provinceIndex = provinceList[provinceIndex - 1].Value;
             
             provinceIndex = _provinceIndex;
+            //Console.WriteLine("Seçilen il: "+ provinceList[provinceIndex - 1].Text);
+            //Console.WriteLine("Seçilen il kodu: "+ provinceList[provinceIndex - 1].Value);
+            
 
             districtList = _client.GetSimple<List<GenericResponseModel>>(MHRSUrls.BaseUrl, string.Format(MHRSUrls.GetDistricts, provinceIndex));
             if (districtList == null || !districtList.Any())
@@ -478,6 +482,42 @@ namespace MHRS_OtomatikRandevu
             
         }
         
+        public static async Task GetHospitals(int clinic)
+        {
+            //Console.WriteLine("Hastaneler Getiriliyor "+ clinic);
+
+            
+            if (clinicList.IsNullOrEmpty())
+            {
+                Console.WriteLine("Klinik Listesi Boş");
+                return;
+            }
+
+            if (clinic != 0)
+                clinicIndex = clinicList[clinic-1].Value;
+            else
+                clinicIndex = -1;
+
+            var hospitalListResponse = _client.Get<List<GenericResponseModel>>(MHRSUrls.BaseUrl, string.Format(MHRSUrls.GetHospitals, provinceIndex, districtIndex, clinicIndex));
+            if (!hospitalListResponse.Success && (hospitalListResponse.Data == null || !hospitalListResponse.Data.Any()))
+            {
+                ConsoleUtil.WriteText("Bir hata meydana geldi!", 2000);
+                return;
+            }
+            else
+            {
+                Console.WriteLine("Başarılı: " + hospitalListResponse.Data.Count);
+            }
+            hospitalList = hospitalListResponse.Data;
+
+            foreach (var item in hospitalList)
+            {
+                Console.WriteLine("Hastane: "+item.Text);
+            }
+
+            //_telegramBotManager.AskHospital(hospitalList);
+        }
+
 
         static JwtTokenModel GetToken(IClientService client)
         {

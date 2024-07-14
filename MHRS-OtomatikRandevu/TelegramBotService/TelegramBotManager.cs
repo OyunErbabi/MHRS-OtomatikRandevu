@@ -367,7 +367,8 @@ namespace MHRS_OtomatikRandevu.TelegramBotService
                     if (index < districtList.Count)
                     {
                         var item = districtList[index];
-                        string _buttonData = String.Format("district_{0}", index); // Index doğrudan kullanılıyor
+                        string _buttonData = String.Format("district_{0}", index); 
+                        //Sstring _buttonData = String.Format("district_{0}", (index+1)); 
                         inlineKeyboard[row][col] = InlineKeyboardButton.WithCallbackData(item.Text, _buttonData);
                     }
                     else
@@ -401,7 +402,7 @@ namespace MHRS_OtomatikRandevu.TelegramBotService
                 for (int col = 0; col < columns; col++)
                 {
                     var item = ClinicList[row];
-                    string _buttonData = String.Format("clinic_{0}", (row + 1));                    
+                    string _buttonData = String.Format("clinic_{0}", (row+1));                    
                     inlineKeyboard[row][col] = InlineKeyboardButton.WithCallbackData(item.Text, _buttonData);
                 }
             }
@@ -413,39 +414,6 @@ namespace MHRS_OtomatikRandevu.TelegramBotService
                 text: "Klinik Seçin:",
                 replyMarkup: inlineKeyboardMarkup,
                 cancellationToken: _cancelToken);
-
-            //int columns = 3;
-            //int rows = (int)Math.Ceiling((double)ClinicList.Count / columns);
-
-            //InlineKeyboardButton[][] inlineKeyboard = new InlineKeyboardButton[rows][];
-
-            //for (int row = 0; row < rows; row++)
-            //{
-            //    inlineKeyboard[row] = new InlineKeyboardButton[columns];
-            //    for (int col = 0; col < columns; col++)
-            //    {
-            //        int index = row * columns + col;
-            //        if (index < ClinicList.Count)
-            //        {
-            //            var item = ClinicList[index];
-            //            string _buttonData = String.Format("clinic_{0}", (index + 1));
-            //            inlineKeyboard[row][col] = InlineKeyboardButton.WithCallbackData(item.Text, _buttonData);
-            //        }
-            //        else
-            //        {
-            //            inlineKeyboard[row][col] = InlineKeyboardButton.WithCallbackData(" ", " "); // Boş buton
-            //        }
-            //    }
-            //}
-
-
-            //InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup(inlineKeyboard);
-
-            //Message sentMessage = await telegramBotClient.SendTextMessageAsync(
-            //    chatId: long.Parse(Program._localDataManager.credentials.AuthenticatedTelegramUserId),
-            //    text: "Klinik Seçin:",
-            //    replyMarkup: inlineKeyboardMarkup,
-            //    cancellationToken: _cancelToken);
         }
 
 
@@ -500,21 +468,22 @@ namespace MHRS_OtomatikRandevu.TelegramBotService
                     break;
                 case var str when Regex.IsMatch(str, "^ist"):
                     Int32 subProvince = Convert.ToInt32(str.Substring(4));
-                    Console.WriteLine("SubProvince: " + subProvince);
+                    //Console.WriteLine("SubProvince: " + subProvince);
                     DeleteMessage(callbackQuery.Message.Chat.Id, callbackQuery.Message.MessageId, cancellationToken);
                     Program.GetDistricts(subProvince);
                     break;
                 case var str when Regex.IsMatch(str, "^district"):
                     Int32 district = Convert.ToInt32(str.Substring(9));
-                    Console.WriteLine("Clicked District: " + district);
+                    //Console.WriteLine("Clicked District: " + district);
                     DeleteMessage(callbackQuery.Message.Chat.Id, callbackQuery.Message.MessageId, cancellationToken);
                     Program.GetClinics(district);
                     break;
                 case var str when Regex.IsMatch(str, "^clinic"):
+                    Console.WriteLine("Klinik tıklandı");
                     Int32 clinic = Convert.ToInt32(str.Substring(7));
-                    Console.WriteLine("Clicked Clinic: " + clinic);
+                    //Console.WriteLine("Clicked Clinic: " + clinic);
                     DeleteMessage(callbackQuery.Message.Chat.Id, callbackQuery.Message.MessageId, cancellationToken);
-                    //Program.GetClinics(district);
+                    Program.GetHospitals(clinic);
                     break;
 
                 default:
