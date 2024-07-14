@@ -24,6 +24,8 @@ namespace MHRS_OtomatikRandevu.TelegramBotService
         public int ActvationCode = 0;
         public string BotToken = string.Empty;
 
+        bool Started = false;
+
         bool waitingForActivationCode = false;
         bool waitingTCNumber = false;
         bool waitingPassword = false;
@@ -143,8 +145,9 @@ namespace MHRS_OtomatikRandevu.TelegramBotService
                 switch (messageText.ToLower(new CultureInfo("en-US")))
                 {
                     case "/start":
+                        Started = true;
                         //Console.WriteLine(Program._localDataManager.credentials.AuthenticatedTelegramUserId);
-                        if(Program._localDataManager.IsAuthenticated())
+                        if (Program._localDataManager.IsAuthenticated())
                         {
                             if(chatId.ToString() != Program._localDataManager.credentials.AuthenticatedTelegramUserId)
                             {
@@ -416,6 +419,93 @@ namespace MHRS_OtomatikRandevu.TelegramBotService
                 cancellationToken: _cancelToken);
         }
 
+        public async void AskHospital(List<GenericResponseModel> HospitalList)
+        {
+            HospitalList.Insert(0, new GenericResponseModel { Text = "FARKETMEZ" });
+
+            int columns = 1;
+            int rows = HospitalList.Count;
+
+            InlineKeyboardButton[][] inlineKeyboard = new InlineKeyboardButton[rows][];
+
+            for (int row = 0; row < rows; row++)
+            {
+                inlineKeyboard[row] = new InlineKeyboardButton[columns];
+                for (int col = 0; col < columns; col++)
+                {
+                    var item = HospitalList[row];
+                    string _buttonData = String.Format("hospital_{0}", row);
+                    inlineKeyboard[row][col] = InlineKeyboardButton.WithCallbackData(item.Text, _buttonData);
+                }
+            }
+
+            InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup(inlineKeyboard);
+
+            Message sentMessage = await telegramBotClient.SendTextMessageAsync(
+                chatId: long.Parse(Program._localDataManager.credentials.AuthenticatedTelegramUserId),
+                text: "Hastane Seçin:",
+                replyMarkup: inlineKeyboardMarkup,
+                cancellationToken: _cancelToken);
+        }
+
+        public async void AskPlace(List<ClinicResponseModel> placeList)
+        {
+            placeList.Insert(0, new ClinicResponseModel { Text = "FARKETMEZ" });
+
+            int columns = 1;
+            int rows = placeList.Count;
+
+            InlineKeyboardButton[][] inlineKeyboard = new InlineKeyboardButton[rows][];
+
+            for (int row = 0; row < rows; row++)
+            {
+                inlineKeyboard[row] = new InlineKeyboardButton[columns];
+                for (int col = 0; col < columns; col++)
+                {
+                    var item = placeList[row];
+                    string _buttonData = String.Format("place_{0}", row);
+                    inlineKeyboard[row][col] = InlineKeyboardButton.WithCallbackData(item.Text, _buttonData);
+                }
+            }
+
+            InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup(inlineKeyboard);
+
+            Message sentMessage = await telegramBotClient.SendTextMessageAsync(
+                chatId: long.Parse(Program._localDataManager.credentials.AuthenticatedTelegramUserId),
+                text: "Muayne Yeri Seçin:",
+                replyMarkup: inlineKeyboardMarkup,
+                cancellationToken: _cancelToken);
+        }
+
+        public async void AskDoctor(List<GenericResponseModel> DoctorList)
+        {
+            DoctorList.Insert(0, new GenericResponseModel { Text = "FARKETMEZ" });
+
+            int columns = 1;
+            int rows = DoctorList.Count;
+
+            InlineKeyboardButton[][] inlineKeyboard = new InlineKeyboardButton[rows][];
+
+            for (int row = 0; row < rows; row++)
+            {
+                inlineKeyboard[row] = new InlineKeyboardButton[columns];
+                for (int col = 0; col < columns; col++)
+                {
+                    var item = DoctorList[row];
+                    string _buttonData = String.Format("doctor_{0}", row);
+                    inlineKeyboard[row][col] = InlineKeyboardButton.WithCallbackData(item.Text, _buttonData);
+                }
+            }
+
+            InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup(inlineKeyboard);
+
+            Message sentMessage = await telegramBotClient.SendTextMessageAsync(
+                chatId: long.Parse(Program._localDataManager.credentials.AuthenticatedTelegramUserId),
+                text: "Doktor Seçin:",
+                replyMarkup: inlineKeyboardMarkup,
+                cancellationToken: _cancelToken);
+        }
+
 
         public void WrongPasswordOrIdEntered()
         {
@@ -441,6 +531,13 @@ namespace MHRS_OtomatikRandevu.TelegramBotService
 
         private async Task BotOnCallbackQueryReceived(CallbackQuery callbackQuery, CancellationToken cancellationToken)
         {
+            if (!Started)
+            {
+                SendMessage("Henüz giriş yapılmamış. Lütfen /start komutu ile giriş işlemini başlatın.", callbackQuery.Message.Chat.Id);
+                return;
+            }
+
+
             //Console.WriteLine("ID " + callbackQuery.From.Id);
             Console.WriteLine("CallBack Data " + callbackQuery.Data);
 
@@ -485,7 +582,27 @@ namespace MHRS_OtomatikRandevu.TelegramBotService
                     DeleteMessage(callbackQuery.Message.Chat.Id, callbackQuery.Message.MessageId, cancellationToken);
                     Program.GetHospitals(clinic);
                     break;
-
+                case var str when Regex.IsMatch(str, "^hospital"):
+                    Console.WriteLine("Hastane tıklandı");
+                    Int32 hospital = Convert.ToInt32(str.Substring(9));
+                    Console.WriteLine("Clicked Hospital: " + hospital);
+                    DeleteMessage(callbackQuery.Message.Chat.Id, callbackQuery.Message.MessageId, cancellationToken);
+                    Program.GetPlace(hospital);
+                    break;
+                case var str when Regex.IsMatch(str, "^place"):
+                    Console.WriteLine("Place tıklandı");
+                    Int32 place = Convert.ToInt32(str.Substring(6));
+                    Console.WriteLine("Clicked Place: " + place);
+                    DeleteMessage(callbackQuery.Message.Chat.Id, callbackQuery.Message.MessageId, cancellationToken);
+                    Program.GetDoctors(place);
+                    break;
+                case var str when Regex.IsMatch(str, "^doctor"):
+                    Console.WriteLine("Doktor tıklandı");
+                    Int32 doctor = Convert.ToInt32(str.Substring(7));
+                    Console.WriteLine("Clicked Doctor: " + doctor);
+                    DeleteMessage(callbackQuery.Message.Chat.Id, callbackQuery.Message.MessageId, cancellationToken);
+                    //Program.GetDoctorInfo(doctor);
+                    break;
                 default:
                     break;
             }

@@ -28,10 +28,14 @@ namespace MHRS_OtomatikRandevu
         public static List<GenericResponseModel> districtList;
         public static List<GenericResponseModel> clinicList;
         public static List<GenericResponseModel> hospitalList;
+        public static List<ClinicResponseModel> placeList;
+        public static List<GenericResponseModel> doctorList;
 
         static Int32 provinceIndex;
         static Int32 districtIndex;
         static Int32 clinicIndex;
+        static Int32 hospitalIndex;
+        static Int32 placeIndex;
 
 
         static void Main(string[] args)
@@ -92,168 +96,6 @@ namespace MHRS_OtomatikRandevu
             _localDataManager.SaveData();
 
             /*
-            #region İl Seçim Bölümü
-            int provinceIndex;
-            var provinceListResponse = _client.GetSimple<List<GenericResponseModel>>(MHRSUrls.BaseUrl, MHRSUrls.GetProvinces);
-            if (provinceListResponse == null || !provinceListResponse.Any())
-            {
-                ConsoleUtil.WriteText("Bir hata meydana geldi!", 2000);
-                return;
-            }
-            provinceList = provinceListResponse
-                                    .DistinctBy(x => x.Value)
-                                    .OrderBy(x => x.Value)
-                                    .ToList();
-            do
-            {
-                Console.Clear();
-                Console.WriteLine("-------------------------------------------");
-                for (int i = 0; i < provinceList.Count; i++)
-                {
-                    Console.WriteLine($"{i + 1}-{provinceList[i].Text}");
-                }
-                Console.WriteLine("-------------------------------------------");
-                Console.Write("İl Numarası (Plaka) Giriniz: ");
-                provinceIndex = Convert.ToInt32(Console.ReadLine());
-
-                if (provinceIndex == 34)
-                {
-                    int subLocationIndex;
-                    do
-                    {
-                        Console.Clear();
-                        Console.WriteLine("-------------------------------------------");
-                        Console.WriteLine($"0-İSTANBUL\n1-İSTANBUL (AVRUPA)\n2-İSTANBUL (ANADOLU)");
-                        Console.WriteLine("-------------------------------------------");
-
-                        Console.Write(@"Alt Bölge Numarası Giriniz: ");
-                        subLocationIndex = Convert.ToInt32(Console.ReadLine()); ;
-                    } while (subLocationIndex < 0 && subLocationIndex > 2);
-
-                    if (subLocationIndex != 0)
-                        provinceIndex = int.Parse("34" + subLocationIndex);
-                }
-
-            } while (provinceIndex < 1 || provinceIndex > 81);
-            provinceIndex = provinceList[provinceIndex - 1].Value;
-
-            #endregion
-            /*
-            #region İlçe Seçim Bölümü
-            int districtIndex;
-            var districtList = _client.GetSimple<List<GenericResponseModel>>(MHRSUrls.BaseUrl, string.Format(MHRSUrls.GetDistricts, provinceIndex));
-            if (districtList == null || !districtList.Any())
-            {
-                ConsoleUtil.WriteText("Bir hata meydana geldi!", 2000);
-                return;
-            }
-
-            do
-            {
-                Console.Clear();
-                Console.WriteLine("-------------------------------------------");
-                Console.WriteLine("0-FARKETMEZ");
-                for (int i = 0; i < districtList.Count; i++)
-                {
-                    Console.WriteLine($"{i + 1}-{districtList[i].Text}");
-                }
-                Console.WriteLine("-------------------------------------------");
-                Console.Write("İlçe Numarası Giriniz: ");
-                districtIndex = Convert.ToInt32(Console.ReadLine()); ;
-
-            } while (districtIndex < 0 || districtIndex > districtList.Count);
-
-            if (districtIndex != 0)
-                districtIndex = districtList[districtIndex - 1].Value;
-            else
-                districtIndex = -1;
-            #endregion
-
-            #region Klinik Seçim Bölümü
-            int clinicIndex;
-            var clinicListResponse = _client.Get<List<GenericResponseModel>>(MHRSUrls.BaseUrl, string.Format(MHRSUrls.GetClinics, provinceIndex, districtIndex));
-            if (!clinicListResponse.Success && (clinicListResponse.Data == null || !clinicListResponse.Data.Any()))
-            {
-                ConsoleUtil.WriteText("Bir hata meydana geldi!", 2000);
-                return;
-            }
-            var clinicList = clinicListResponse.Data;
-            do
-            {
-                Console.Clear();
-                Console.WriteLine("-------------------------------------------");
-                for (int i = 0; i < clinicList.Count; i++)
-                {
-                    Console.WriteLine($"{i + 1}-{clinicList[i].Text}");
-                }
-                Console.WriteLine("-------------------------------------------");
-                Console.Write("Klinik Numarası Giriniz: ");
-                clinicIndex = Convert.ToInt32(Console.ReadLine()); ;
-
-            } while (clinicIndex < 1 || clinicIndex > clinicList.Count);
-            clinicIndex = clinicList[clinicIndex - 1].Value;
-            #endregion
-
-            #region Hastane Seçim Bölümü
-            int hospitalIndex;
-            var hospitalListResponse = _client.Get<List<GenericResponseModel>>(MHRSUrls.BaseUrl, string.Format(MHRSUrls.GetHospitals, provinceIndex, districtIndex, clinicIndex));
-            if (!hospitalListResponse.Success && (hospitalListResponse.Data == null || !hospitalListResponse.Data.Any()))
-            {
-                ConsoleUtil.WriteText("Bir hata meydana geldi!", 2000);
-                return;
-            }
-            var hospitalList = hospitalListResponse.Data;
-            do
-            {
-                Console.Clear();
-                Console.WriteLine("-------------------------------------------");
-                Console.WriteLine("0-FARKETMEZ");
-                for (int i = 0; i < hospitalList.Count; i++)
-                {
-                    Console.WriteLine($"{i + 1}-{hospitalList[i].Text}");
-                }
-                Console.WriteLine("-------------------------------------------");
-                Console.Write("Hastane Numarası Giriniz: ");
-                hospitalIndex = Convert.ToInt32(Console.ReadLine()); ;
-            } while (hospitalIndex < 0 || hospitalIndex > hospitalList.Count);
-
-            if (hospitalIndex != 0)
-            {
-                var hospital = hospitalList[hospitalIndex - 1];
-                if (hospital.Children.Any())
-                {
-                    do
-                    {
-                        Console.Clear();
-                        Console.WriteLine("-------------------------------------------");
-                        Console.WriteLine($"0-{hospital.Text}");
-                        for (int i = 0; i < hospital.Children.Count; i++)
-                        {
-                            Console.WriteLine($"{i + 1}-{hospital.Children[i].Text}");
-                        }
-                        Console.WriteLine("-------------------------------------------");
-                        Console.Write("Hastane/Poliklinik Numarası Giriniz: ");
-                        hospitalIndex = Convert.ToInt32(Console.ReadLine()); ;
-                    } while (0 < hospitalIndex || hospitalIndex > hospital.Children.Count);
-
-                    if (hospitalIndex == 0)
-                        hospitalIndex = hospital.Value;
-                    else
-                        hospitalIndex = hospital.Children[hospitalIndex - 1].Value;
-                }
-                else
-                {
-                    hospitalIndex = hospitalList[hospitalIndex - 1].Value;
-                }
-
-            }
-            else
-            {
-                hospitalIndex = -1;
-            }
-
-            #endregion
-
             #region Muayene Yeri Seçim Bölümü
             int placeIndex;
             var placeListResponse = _client.Get<List<ClinicResponseModel>>(MHRSUrls.BaseUrl, string.Format(MHRSUrls.GetPlaces, hospitalIndex, clinicIndex));
@@ -483,10 +325,7 @@ namespace MHRS_OtomatikRandevu
         }
         
         public static async Task GetHospitals(int clinic)
-        {
-            //Console.WriteLine("Hastaneler Getiriliyor "+ clinic);
-
-            
+        {   
             if (clinicList.IsNullOrEmpty())
             {
                 Console.WriteLine("Klinik Listesi Boş");
@@ -510,12 +349,89 @@ namespace MHRS_OtomatikRandevu
             }
             hospitalList = hospitalListResponse.Data;
 
-            foreach (var item in hospitalList)
+            //foreach (var item in hospitalList)
+            //{
+            //    Console.WriteLine("Hastane: "+item.Text);
+            //}
+
+            _telegramBotManager.AskHospital(hospitalList);
+        }
+
+        public static async Task GetPlace(int place)
+        {
+            if (hospitalList.IsNullOrEmpty())
             {
-                Console.WriteLine("Hastane: "+item.Text);
+                Console.WriteLine("Hastane Listesi Boş");
+                return;
             }
 
-            //_telegramBotManager.AskHospital(hospitalList);
+            /*
+            if (hospital != 0)
+                //hospitalIndex = hospitalList[hospital].Value;
+                hospitalIndex = hospitalList[hospital - 1].Value;
+            else
+                hospitalIndex = -1;
+            */
+            hospitalIndex = hospitalList[place].Value;
+
+            //Console.WriteLine("Seçilen Hastane: "+ hospitalList[hospital].Text);
+
+            //foreach (var item in hospitalList)
+            //{
+            //    Console.WriteLine("Hastane: "+item.Text);
+            //    Console.WriteLine("Hastane Kodu: "+item.Value);
+            //}
+
+
+            var placeListResponse = _client.Get<List<ClinicResponseModel>>(MHRSUrls.BaseUrl, string.Format(MHRSUrls.GetPlaces, hospitalIndex, clinicIndex));
+            if (!placeListResponse.Success && (placeListResponse.Data == null || !placeListResponse.Data.Any()))
+            {
+                ConsoleUtil.WriteText("Bir hata meydana geldi!", 2000);
+                return;
+            }
+
+            placeList = placeListResponse.Data;
+            foreach (var item in placeList)
+            {
+                Console.WriteLine("Muayne Yeri: " + item.Text);
+            }
+            _telegramBotManager.AskPlace(placeList);
+        }
+
+        public static async Task GetDoctors(int place)
+        {
+            if (placeList.IsNullOrEmpty())
+            {
+                Console.WriteLine("Hastane Listesi Boş");
+                return;
+            }
+
+            if (placeIndex != 0)
+                placeIndex = placeList[place - 1].Value;
+            else
+                placeIndex = -1;
+
+            //Console.WriteLine("Seçilen Hastane: "+ hospitalList[hospital].Text);
+
+            foreach (var item in placeList)
+            {
+                Console.WriteLine("Hastane: " + item.Text);
+                Console.WriteLine("Hastane Kodu: " + item.Value);
+            }
+
+
+            var doctorListResponse = _client.Get<List<GenericResponseModel>>(MHRSUrls.BaseUrl, string.Format(MHRSUrls.GetDoctors, hospitalIndex, clinicIndex));
+            if (!doctorListResponse.Success && (doctorListResponse.Data == null || !doctorListResponse.Data.Any()))
+            {
+                ConsoleUtil.WriteText("Bir hata meydana geldi!", 2000);
+                return;
+            }
+            var doctorList = doctorListResponse.Data;
+            foreach (var item in doctorList)
+            {
+                Console.WriteLine("Doktor: " + item.Text);
+            }
+            _telegramBotManager.AskDoctor(doctorList);
         }
 
 
