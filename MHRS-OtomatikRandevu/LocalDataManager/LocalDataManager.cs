@@ -37,13 +37,10 @@ public class LocalDataManager
     public void SaveData()
     {
         string filePath = "credentials.json";
-
         try
         {
             string jsonData = JsonConvert.SerializeObject(credentials, Formatting.Indented);
             File.WriteAllText(filePath, jsonData);
-
-            //Console.WriteLine("Verileriniz başarıyla kaydedildi.\n"+jsonData);
         }
         catch (Exception ex)
         {

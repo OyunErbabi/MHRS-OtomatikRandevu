@@ -601,7 +601,7 @@ namespace MHRS_OtomatikRandevu.TelegramBotService
                     Int32 doctor = Convert.ToInt32(str.Substring(7));
                     Console.WriteLine("Clicked Doctor: " + doctor);
                     DeleteMessage(callbackQuery.Message.Chat.Id, callbackQuery.Message.MessageId, cancellationToken);
-                    //Program.GetDoctorInfo(doctor);
+                    Program.GetAppointment(doctor);
                     break;
                 default:
                     break;
@@ -737,21 +737,6 @@ namespace MHRS_OtomatikRandevu.TelegramBotService
                 text: AnswerText,
                 cancellationToken: cancellationToken);
             }
-
-
-            //await botClient.SendTextMessageAsync(
-            //    chatId: callbackQuery.Message!.Chat.Id,
-            //    text: $"Received {callbackQuery.Data}",
-            //    cancellationToken: cancellationToken);
-
-            //InlineKeyboardMarkup updatedInlineKeyboard = null;
-
-            //await botClient.EditMessageReplyMarkupAsync(
-            //chatId: callbackQuery.From.Id,
-            //messageId: callbackQuery.Message.MessageId,
-            //replyMarkup: updatedInlineKeyboard,
-            //cancellationToken: cancellationToken
-            //);
 
 
 
