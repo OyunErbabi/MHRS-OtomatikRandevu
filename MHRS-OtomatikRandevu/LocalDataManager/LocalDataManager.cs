@@ -72,7 +72,7 @@ public class LocalDataManager
 
     public bool IsAuthenticated()
     {
-        if(credentials.AuthenticatedTelegramUserId.ToLower() == "null")
+        if(credentials.AuthenticatedTelegramUserId.ToLower() == "")
         {
             return false;
         }

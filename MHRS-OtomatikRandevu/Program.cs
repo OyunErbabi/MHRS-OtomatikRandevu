@@ -51,15 +51,8 @@ namespace MHRS_OtomatikRandevu
             Console.WriteLine("");
             Console.WriteLine(String.Format("Yeni Bir Telegram Bot'u Oluşturmak İçin Aşağıdaki Adrese Gidin: \n{0}",TelegramUrls.BotFatherUrl));
             Console.WriteLine("");
-            
-            //TelegramBotToken =  Console.ReadLine();
 
-
-            //Console.Clear();
-
-            //Console.WriteLine("Telegram Bot Api Keyiniz: " + TelegramBotToken);
-
-            if(_localDataManager.credentials.TelegramApiKey.ToLower() != "null")
+            if(_localDataManager.credentials.TelegramApiKey.ToLower() != "")
             {
                 Console.WriteLine("Kayıtlı Telegram Bot Api Keyiniz: " + _localDataManager.credentials.TelegramApiKey);
                 
@@ -151,12 +144,7 @@ namespace MHRS_OtomatikRandevu
                 return;
             }
 
-            //_provinceIndex = provinceList[provinceIndex - 1].Value;
-            
             provinceIndex = _provinceIndex;
-            //Console.WriteLine("Seçilen il: "+ provinceList[provinceIndex - 1].Text);
-            //Console.WriteLine("Seçilen il kodu: "+ provinceList[provinceIndex - 1].Value);
-            
 
             districtList = _client.GetSimple<List<GenericResponseModel>>(MHRSUrls.BaseUrl, string.Format(MHRSUrls.GetDistricts, provinceIndex));
             if (districtList == null || !districtList.Any())
@@ -196,8 +184,6 @@ namespace MHRS_OtomatikRandevu
 
             clinicList = clinicListResponse.Data;
             _telegramBotManager.AskClinic(clinicList);
-
-            // clinicIndex = clinicList[clinicIndex - 1].Value;
             
         }
         
@@ -226,11 +212,6 @@ namespace MHRS_OtomatikRandevu
             }
             hospitalList = hospitalListResponse.Data;
 
-            //foreach (var item in hospitalList)
-            //{
-            //    Console.WriteLine("Hastane: "+item.Text);
-            //}
-
             _telegramBotManager.AskHospital(hospitalList);
         }
 
@@ -242,23 +223,7 @@ namespace MHRS_OtomatikRandevu
                 return;
             }
 
-            /*
-            if (hospital != 0)
-                //hospitalIndex = hospitalList[hospital].Value;
-                hospitalIndex = hospitalList[hospital - 1].Value;
-            else
-                hospitalIndex = -1;
-            */
             hospitalIndex = hospitalList[place].Value;
-
-            //Console.WriteLine("Seçilen Hastane: "+ hospitalList[hospital].Text);
-
-            //foreach (var item in hospitalList)
-            //{
-            //    Console.WriteLine("Hastane: "+item.Text);
-            //    Console.WriteLine("Hastane Kodu: "+item.Value);
-            //}
-
 
             var placeListResponse = _client.Get<List<ClinicResponseModel>>(MHRSUrls.BaseUrl, string.Format(MHRSUrls.GetPlaces, hospitalIndex, clinicIndex));
             if (!placeListResponse.Success && (placeListResponse.Data == null || !placeListResponse.Data.Any()))
@@ -288,8 +253,6 @@ namespace MHRS_OtomatikRandevu
             else
                 placeIndex = -1;
 
-            //Console.WriteLine("Seçilen Hastane: "+ hospitalList[hospital].Text);
-
             foreach (var item in placeList)
             {
                 Console.WriteLine("Hastane: " + item.Text);
@@ -314,8 +277,7 @@ namespace MHRS_OtomatikRandevu
 
         public static async Task GetAppointment(int DoctorIndex)
         {
-            if (doctorIndex != 0)
-               //doctorIndex = doctorList[DoctorIndex].Value;
+            if (doctorIndex != 0)               
                doctorIndex = doctorList[DoctorIndex-1].Value;
             else
                 doctorIndex = -1;
@@ -323,6 +285,7 @@ namespace MHRS_OtomatikRandevu
 
             bool appointmentState = false;
             bool isNotified = false;
+            _telegramBotManager.SendMessage("Randevu aranıyor. Uygun randevu bulunduğunda buradan bilgilendirileceksiniz. Lütfen bu bot'un çalıştığı bilgisayarı kapatmayınız.", long.Parse(_localDataManager.credentials.AuthenticatedTelegramUserId));
             do
             {
                 if (TOKEN_END_DATE == default || TOKEN_END_DATE < DateTime.Now)
@@ -371,36 +334,33 @@ namespace MHRS_OtomatikRandevu
                     
                 }
                
-
+                
                 Console.WriteLine("Id: "+slot.Id);
                 Console.WriteLine("FkCetvelId: "+slot.FkCetvelId);
                 Console.WriteLine("MuayeneYeriId: "+slot.MuayeneYeriId);
                 Console.WriteLine("Başlangıç Zamanı: "+slot.BaslangicZamani);
                 Console.WriteLine("Bitiş Zamanı: "+slot.BitisZamani);
-
+                
                 Thread.Sleep(TimeSpan.FromMinutes(1));
 
 
-                //appointmentState = MakeAppointment(_client, appointmentRequestModel, true);
+                appointmentState = MakeAppointment(_client, appointmentRequestModel, true);
             } while (!appointmentState);
         }
 
 
         static JwtTokenModel GetToken(IClientService client)
-        {
-            //Console.WriteLine("Getting Token");
+        {            
             var tokenData = _localDataManager.credentials.TokenData;
             try
             {   
                 tokenData = _localDataManager.credentials.TokenData;
                 if (string.IsNullOrEmpty(tokenData) || JwtTokenUtil.GetTokenExpireTime(tokenData) < DateTime.Now)
-                    throw new Exception();
-                //Console.WriteLine("Token ile giriş yapıldı");
+                    throw new Exception();                
                 return new() { Token = tokenData, Expiration = JwtTokenUtil.GetTokenExpireTime(tokenData) };
             }
             catch (Exception)
             {
-                //Console.WriteLine("Token geçersiz yenisi oluşturuluyor");
                 var loginRequestModel = new LoginRequestModel
                 {
                     KullaniciAdi = TC_NO,
@@ -409,8 +369,7 @@ namespace MHRS_OtomatikRandevu
 
                 var loginResponse = client.Post<LoginResponseModel>(MHRSUrls.BaseUrl, MHRSUrls.Login, loginRequestModel).Result;
                 if (loginResponse.Data == null || (loginResponse.Data != null && string.IsNullOrEmpty(loginResponse.Data?.Jwt)))
-                {
-                    //ConsoleUtil.WriteText("Giriş yapılırken bir hata meydana geldi!", 2000);
+                {                    
                     return null;
                 }
 
@@ -449,14 +408,16 @@ namespace MHRS_OtomatikRandevu
             var randevuResp = client.PostSimple(MHRSUrls.BaseUrl, MHRSUrls.MakeAppointment, appointmentRequestModel);
             if (randevuResp.StatusCode != HttpStatusCode.OK)
             {
-                Console.WriteLine($"Randevu alırken bir problem ile karşılaşıldı! \nRandevu Tarihi -> {appointmentRequestModel.BaslangicZamani}");
+                _telegramBotManager.SendMessage($"Randevu alırken bir problem ile karşılaşıldı! \nRandevu Tarihi -> {appointmentRequestModel.BaslangicZamani}", long.Parse(_localDataManager.credentials.AuthenticatedTelegramUserId));
                 return false;
             }
 
             var message = $"Randevu alındı! \nRandevu Tarihi -> {appointmentRequestModel.BaslangicZamani}";
             Console.WriteLine(message);
 
-            _telegramBotManager.SendMessage(message, long.Parse(_localDataManager.credentials.AuthenticatedTelegramUserId));
+            
+            string appointmentMessage = string.Format("Randevu alındı! \nRandevu Tarihi -> {0}", appointmentRequestModel.BaslangicZamani);
+            _telegramBotManager.SendMessage(appointmentMessage, long.Parse(_localDataManager.credentials.AuthenticatedTelegramUserId));
 
             return true;
         }

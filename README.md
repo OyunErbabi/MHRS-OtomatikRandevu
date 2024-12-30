@@ -1,6 +1,7 @@
 ![Banner](https://i.hizliresim.com/jv6ah3o.jpg)
 # MHRS Otomatik Randevu
-MHRS kullanıcı bilgileriniz ile giriş yaptıktan sonra İl-İlçe-Klinik-Doktor gibi filtrelemeler yaparak aradığınız randevunun müsaitlik durumunu anlık olarak takip edebilir veya randevuyu otomatik olarak alabilirsiniz.
+Gerekli kurulumları yaptıktan sonra MHRS kullanıcı bilgileriniz ile giriş yapıp İl-İlçe-Klinik-Doktor gibi filtrelemeler yaparak aradığınız randevuyu otomatik olarak alabilirsiniz.
+Bu program telegram bot'u ile birlikte çalışmaktadır. Bu sayede bilgisayarınızdan uzakta olsanız bile telefon üzerinden randevu arayabilir ve uygun randevuyu aldıktan sonra bilgilendirilirsiniz.
 
 ## Neden Buna İhtiyaç Duyuldu?
 Devlet hastanelerinde randevu bulmak oldukça zorlaştı, MHRS'nin vatandaşlara sunmuş olduğu randevu müsaitlik bildirim sistemi yeteri kadar hızlı ve sağlıklı çalışmadığı için bu konsol uygulaması geliştirildi.
@@ -8,15 +9,25 @@ Devlet hastanelerinde randevu bulmak oldukça zorlaştı, MHRS'nin vatandaşlara
 ## Randevu Tarama Sıklığı Nedir?
 Aradığınız kriterlere uygun randevu sisteme düştüğünde 5 dakika içerisinde otomatik olarak randevu tarafınıza bildirilir ve alınır.
 
-## Bildirim Sistemi Nasıl İşlemektedir?
-Ücretsiz bir şekilde kullanabileceğiniz [Twilio](https://twilio.com) bildirim servisinden hesap oluştururken kullandığınız cep telefonunuza sms gönderilir.
+## Telegram Bot Sistemi Nasıl İşlemektedir?
+Ücretsiz ve kolay bir şekilde Telegram üzerinden [BotFather](https://telegram.me/BotFather) ile kendinize ait bir bot oluşturduktan sonra hem randevu alma işlemi hem de uygun randevu bulunduğunda bildirim almak için kullanılır.
 
-## Bildirim Sistemi Kurulumu
-Mevcut uygulamada bildirim sistemi opsiyonel olmadığı için uygulamayı kullanmaya başlamadan önce aşağıdaki adımları mutlaka uygulamanız gerekmektedir.
+## Neden Telegram Botunu Kendim Oluşturmam Gerekiyor?
+Kişisel verilerinizi sadece size ait olan bir bot ile paylaşmanız aklınızda soru işareti bırakmayacak şekilde güvenliğinizi sağlamak için düşünülmüştür. Ayrıca bu proje açık kaynaklı olduğu için teknik olarak programın nasıl çalıştığını gönül rahatlığıyla inceleyebilirsiniz.
 
-1-[Twilio](https://twilio.com) hesabı açıp cep telefonu numaranızı onaylayın,\
-2-[Konsol sayfası](https://console.twilio.com)na giderek aşağıdaki bilgilerinize ulaşabilirsiniz. Bu bilgileri [App.Config](https://github.com/kuzudoli/MHRS-OtomatikRandevu/blob/master/MHRS-OtomatikRandevu/App.config) dosyasındaki alanlara eklemeniz gerekmektedir.
+## Uygulamanın Kurulumu
+1-[Releases](https://github.com/OyunErbabi/MHRS-OtomatikRandevu/releases) kısmından mevcut versiyonu indirip zip dosyasını herhangi bir konuma çıkartın.
+2-MHRS-OtomatikRandevu.exe ile programı başlatın.
+3-Eğer ilk defa kurulum yapıyorsanız telegramdan @BotFather [BotFather](https://telegram.me/BotFather) adresine gidiniz.
+    3.1-BotFather'a "/newbot" komutu girerek yeni bir bot oluşturun.
+    3.2-Oluşturmak istediğiniz bota bir isim verin.
+    3.3-Oluşturmak istediğiniz bota bir kullanıcı ismi verin(Bot kelimesi ile bitmek zorundadır! Örn: TetrisBot veya tetris_bot)
+    3.4-Bot'u başarılı bir şekilde oluşturduğunuzda size bir token vermektedir. Bu tokeni programa giriniz. (Örn: 0123456789:XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX)
+4-Bir önceki adımda oluşturduğunuz botun tokenini programa giriniz ve işlemlerinize telegram üzerinden devam ediniz.
+5-Telegram üzerinden oluşturuduğunuz bota ulaşmak için 3.3 adımında verdiğiniz kullanıcı adını aratarak ulaşın ve \start komutunu giriniz.
+6-İlk defa bot ile etkileşim kurmak için masaüstü programının size verdiği "Telegram Aktivasyon Kodunu" mesaj olarak gönderiniz. Bu adımda numaranız bot ile eşleşmekte ve başka bir numaradan gelen taleplere bot yanıt vermemektedir.
+7-Eşleşme tamamlandıktan sonra artık Tc No ve MHRS şifreniz(E-Devlet şifreniz değil!) ile giriş adımlarını tamamlayarak İl-İlçe-Hastane-Klinik-Doktor adımları ile randevu arama işlemini başlatabilirsiniz.
 
-![Twilio Hesap Bilgileri](https://i.hizliresim.com/tfeswu3.jpg)
 
-<b>NOT: SADECE TWILIO HESABINIZA TANIMLI OLAN ONAYLANMIŞ CEP TELEFONU NUMARANIZA SMS GÖNDERİLEBİLİR.</b>
+## Uygulamayı Sıfırlama
+Eğer başka bir telefon numarası ile eşleştirme yapmak istiyorsanız programın içinde bulunan "credentials.json" dosyasını siliniz. Bu sayede kurulum adımlarından 4. adıma dönmüş olacaksınız.

@@ -98,11 +98,9 @@ namespace MHRS_OtomatikRandevu.TelegramBotService
         {
 
             using CancellationTokenSource cts = new();
-
-            // StartReceiving does not block the caller thread. Receiving is done on the ThreadPool.
             ReceiverOptions receiverOptions = new()
             {
-                AllowedUpdates = Array.Empty<UpdateType>() // receive all update types except ChatMember related updates
+                AllowedUpdates = Array.Empty<UpdateType>()
             };
 
 
@@ -119,8 +117,7 @@ namespace MHRS_OtomatikRandevu.TelegramBotService
 
             Console.WriteLine($"Start listening for @{me.Username}");
             Console.ReadLine();
-
-            // Send cancellation request to stop bot
+                        
             cts.Cancel();
 
             async Task HandleUpdateAsync(ITelegramBotClient botClient, Update update, CancellationToken cancellationToken)
@@ -131,22 +128,21 @@ namespace MHRS_OtomatikRandevu.TelegramBotService
                     BotOnCallbackQueryReceived(update.CallbackQuery, cancellationToken);
                 }
 
-                // Only process Message updates: https://core.telegram.org/bots/api#message
+                
                 if (update.Message is not { } message)
                     return;
-                // Only process text messages
+                
                 if (message.Text is not { } messageText)
                     return;
 
                 var chatId = message.Chat.Id;
 
-                //Console.WriteLine($"Received a '{messageText}' message in chat {chatId}.");
+                
                 
                 switch (messageText.ToLower(new CultureInfo("en-US")))
                 {
                     case "/start":
-                        Started = true;
-                        //Console.WriteLine(Program._localDataManager.credentials.AuthenticatedTelegramUserId);
+                        Started = true;                        
                         if (Program._localDataManager.IsAuthenticated())
                         {
                             if(chatId.ToString() != Program._localDataManager.credentials.AuthenticatedTelegramUserId)
@@ -166,54 +162,18 @@ namespace MHRS_OtomatikRandevu.TelegramBotService
                         }
 
                         break;
-                    case "/register":
-                        
-
-                        break;
-                    case "/setup":
-                        
-                        break;
-                    case "/testconnection":
-
-                        break;
-                    case "/help":
-                        SendMessage("HELP WORK IN PROGRESS", chatId);
-                        break;
-                    case string data when data.Contains("/adminmessage"):
-
-                        //SendMessage("Received Admin Command " + data, chatId);
-
-                        string pattern = @"^/adminmessage ""(.*?)"" (\d+)$";
-                        Match match = Regex.Match(data, pattern);
-
-                        if (match.Success)
-                        {
-                            string _message = match.Groups[1].Value;
-                            long number = long.Parse(match.Groups[2].Value);
-
-                            Console.WriteLine("Message: " + _message);
-                            Console.WriteLine("Number: " + number);
-
-                            SendMessage(_message, number);
-                        }
-                        else
-                        {
-                            Console.WriteLine("Invalid command format.");
-                        }
-
-                        break;
                     default:
                         if (waitingForActivationCode)
                         {
                             if (messageText == ActvationCode.ToString())
                             {
-                                SendMessage("Aktivasyon Başarılı ✅", chatId);
+                                SendMessage("Aktivasyon Başarılı ✅\nLütfen tekrar /start komutu ile kuruluma devam ediniz.", chatId);
                                 Program._localDataManager.SetAuthenticatedTelegramUserId(chatId.ToString());
                                 waitingForActivationCode = false;
                             }
                             else
                             {
-                                SendMessage("Kod Hatalı Lütfen Tekrar Gönderin ⛔", chatId);
+                                SendMessage("Kod Hatalı⛔\nLütfen Tekrar Aktivasyon Kodunu Girin:", chatId);
                             }
                         }
                         else
@@ -253,44 +213,6 @@ namespace MHRS_OtomatikRandevu.TelegramBotService
                         break;
                 }
 
-
-
-                //if (messageText == "/start")
-                //{
-
-                //    InlineKeyboardMarkup inlineKeyboard = new(
-                //     new[]
-                //     {
-                //        // first row
-                //        new []
-                //        {
-                //            InlineKeyboardButton.WithCallbackData("1.1","13"),
-                //            InlineKeyboardButton.WithCallbackData("1.2", "12"),
-                //        },
-                //        // second row
-                //        new []
-                //        {
-                //            InlineKeyboardButton.WithCallbackData("2.1", "21"),
-                //            InlineKeyboardButton.WithCallbackData("2.2", "22"),
-                //        },
-                //     });
-
-
-                //    Message sentMessage = await botClient.SendTextMessageAsync(
-                //        chatId: chatId,
-                //        text: "A message with an inline keyboard markup",
-                //        replyMarkup: inlineKeyboard,
-                //        cancellationToken: cancellationToken);
-                //}
-
-
-
-
-                //// Echo received message text
-                //Message sentMessage = await botClient.SendTextMessageAsync(
-                //    chatId: chatId,
-                //    text: "You said:\n" + messageText,
-                //    cancellationToken: cancellationToken);
             }
 
         }
@@ -329,9 +251,7 @@ namespace MHRS_OtomatikRandevu.TelegramBotService
                 chatId: long.Parse(Program._localDataManager.credentials.AuthenticatedTelegramUserId),
                 text: "Randevu Almak İstediğiniz İli Seçin:",
                 replyMarkup: inlineKeyboardMarkup,
-                cancellationToken: _cancelToken);
-
-            //SendMessage("Listeden Randevu Almak İstediğiniz İli Seçin", long.Parse(Program._localDataManager.credentials.AuthenticatedTelegramUserId));
+                cancellationToken: _cancelToken);            
         }
 
         public async void AskIstanbulLocation()
@@ -370,13 +290,12 @@ namespace MHRS_OtomatikRandevu.TelegramBotService
                     if (index < districtList.Count)
                     {
                         var item = districtList[index];
-                        string _buttonData = String.Format("district_{0}", index); 
-                        //Sstring _buttonData = String.Format("district_{0}", (index+1)); 
+                        string _buttonData = String.Format("district_{0}", index);                         
                         inlineKeyboard[row][col] = InlineKeyboardButton.WithCallbackData(item.Text, _buttonData);
                     }
                     else
                     {
-                        inlineKeyboard[row][col] = InlineKeyboardButton.WithCallbackData(" ", " "); // Boş buton
+                        inlineKeyboard[row][col] = InlineKeyboardButton.WithCallbackData(" ", " ");
                     }
                 }
             }
@@ -537,11 +456,8 @@ namespace MHRS_OtomatikRandevu.TelegramBotService
                 return;
             }
 
-
-            //Console.WriteLine("ID " + callbackQuery.From.Id);
             Console.WriteLine("CallBack Data " + callbackQuery.Data);
-
-            //string AnswerText = "";
+                        
             switch (callbackQuery.Data)
             {
                 case var str when Regex.IsMatch(str, "^province"):
@@ -564,21 +480,18 @@ namespace MHRS_OtomatikRandevu.TelegramBotService
                     }
                     break;
                 case var str when Regex.IsMatch(str, "^ist"):
-                    Int32 subProvince = Convert.ToInt32(str.Substring(4));
-                    //Console.WriteLine("SubProvince: " + subProvince);
+                    Int32 subProvince = Convert.ToInt32(str.Substring(4));                    
                     DeleteMessage(callbackQuery.Message.Chat.Id, callbackQuery.Message.MessageId, cancellationToken);
                     Program.GetDistricts(subProvince);
                     break;
                 case var str when Regex.IsMatch(str, "^district"):
-                    Int32 district = Convert.ToInt32(str.Substring(9));
-                    //Console.WriteLine("Clicked District: " + district);
+                    Int32 district = Convert.ToInt32(str.Substring(9));                    
                     DeleteMessage(callbackQuery.Message.Chat.Id, callbackQuery.Message.MessageId, cancellationToken);
                     Program.GetClinics(district);
                     break;
                 case var str when Regex.IsMatch(str, "^clinic"):
                     Console.WriteLine("Klinik tıklandı");
-                    Int32 clinic = Convert.ToInt32(str.Substring(7));
-                    //Console.WriteLine("Clicked Clinic: " + clinic);
+                    Int32 clinic = Convert.ToInt32(str.Substring(7));                    
                     DeleteMessage(callbackQuery.Message.Chat.Id, callbackQuery.Message.MessageId, cancellationToken);
                     Program.GetHospitals(clinic);
                     break;
@@ -607,127 +520,6 @@ namespace MHRS_OtomatikRandevu.TelegramBotService
                     break;
             }
 
-                    /*
-                    bool timeDataSelected = false;
-                    UserConfig _userConfig = new UserConfig();
-                    _userConfig.UserId = callbackQuery.From.Id;
-                    */
-                    /*
-                    string AnswerText = "";
-                    switch (callbackQuery.Data)
-                    {
-                        case var str when Regex.IsMatch(str, "^wh"):
-
-                            if (str.StartsWith("wh_"))
-                            {
-                                string remainingText = str.Substring(3);
-
-                                if (remainingText == "save")
-                                {
-                                    AnswerText = "👍 Save Successful";
-                                    DeleteMessage(callbackQuery);
-                                    UserActions.SetWorkTime(_userConfig.UserId.ToString());
-                                }
-                                else
-                                {
-                                    AnswerText = "Warehouse Selected";
-                                    UserActions.UpdateServiceAreaList(_userConfig.UserId.ToString(), remainingText, callbackQuery);
-                                }
-                            }
-
-                            break;
-                        case var str when Regex.IsMatch(str, "^tz"):
-                            Console.WriteLine("Metin 'tz' ile başlıyor.");
-                            // 'tz' ile başlayan metin için yapılacak işlemler
-                            break;
-                        case var str when Regex.IsMatch(str, "^wt"):
-
-                            if (str.StartsWith("wt_"))
-                            {
-                                string workTimeText = str.Substring(3);
-
-                                if (workTimeText == "save")
-                                {
-                                    AnswerText = "👍 Save Successful";
-                                    DeleteMessage(callbackQuery);
-                                    UserActions.SetMinimumWorkStartTime(_userConfig.UserId.ToString());
-                                }
-                                else
-                                {
-                                    AnswerText = "WorkTime Selected";
-                                    UserActions.UpdateWorktime(_userConfig.UserId.ToString(), workTimeText, callbackQuery);
-                                }
-                            }
-
-
-                            break;
-                        case var str when Regex.IsMatch(str, "^mt"):
-
-                            if (str.StartsWith("mt_"))
-                            {
-                                string workTimeText = str.Substring(3);
-
-                                if (workTimeText == "save")
-                                {
-                                    AnswerText = "👍 Save Successful";
-                                    DeleteMessage(callbackQuery);
-                                    //UserActions.SetMinimumWorkStartTime(_userConfig.UserId.ToString());
-                                }
-                                else
-                                {
-                                    AnswerText = "WorkTime Selected";
-                                    //UserActions.UpdateWorktime(_userConfig.UserId.ToString(), workTimeText, callbackQuery);
-                                }
-                            }
-                            break;
-
-
-                        default:
-                            switch (callbackQuery.Data)
-                            {
-                                case string data when data.Contains("PDT"):
-                                    _userConfig.TimeZone = UserTimeZone.PDT;
-                                    timeDataSelected = true;
-                                    //Console.WriteLine("PDT SELECTED!");
-                                    UserActions.UpdateUserConfig(_userConfig);
-                                    DeleteMessage(callbackQuery);
-                                    break;
-
-                                case string data when data.Contains("MDT"):
-                                    _userConfig.TimeZone = UserTimeZone.MDT;
-                                    timeDataSelected = true;
-                                    //Console.WriteLine("MDT SELECTED!");
-                                    UserActions.UpdateUserConfig(_userConfig);
-                                    DeleteMessage(callbackQuery);
-                                    break;
-
-                                case string data when data.Contains("CDT"):
-                                    _userConfig.TimeZone = UserTimeZone.CDT;
-                                    timeDataSelected = true;
-                                    //Console.WriteLine("CDT SELECTED!");
-                                    UserActions.UpdateUserConfig(_userConfig);
-                                    DeleteMessage(callbackQuery);
-                                    break;
-
-                                case string data when data.Contains("EDT"):
-                                    _userConfig.TimeZone = UserTimeZone.EDT;
-                                    timeDataSelected = true;
-                                    //Console.WriteLine("EDT SELECTED!");
-                                    UserActions.UpdateUserConfig(_userConfig);
-                                    DeleteMessage(callbackQuery);
-                                    break;
-
-                                    //await botClient.DeleteMessageAsync(
-                                    //chatId: callbackQuery.From.Id,
-                                    //messageId: callbackQuery.Message.MessageId,
-                                    //cancellationToken: cancellationToken
-                                    //);
-                            }
-                            break;
-
-                    }
-                    */
-
                     string AnswerText = "Başarılı";
 
             if (AnswerText.Length > 0)
@@ -737,9 +529,6 @@ namespace MHRS_OtomatikRandevu.TelegramBotService
                 text: AnswerText,
                 cancellationToken: cancellationToken);
             }
-
-
-
 
         }
 
@@ -766,11 +555,10 @@ namespace MHRS_OtomatikRandevu.TelegramBotService
             try
             {
                 await telegramBotClient.DeleteMessageAsync(chatId, messageId, cancellationToken);
-                //Console.WriteLine("Mesaj başarıyla silindi.");
             }
             catch (Exception ex)
             {
-                //Console.WriteLine("Mesaj silinirken bir hata oluştu: " + ex.Message);
+                Console.WriteLine("Mesaj silinirken bir hata oluştu: " + ex.Message);
             }
         }
 
