@@ -1,6 +1,7 @@
 ![Banner](https://i.hizliresim.com/jv6ah3o.jpg)
 # MHRS Otomatik Randevu
 Gerekli kurulumları yaptıktan sonra MHRS kullanıcı bilgileriniz ile giriş yapıp İl-İlçe-Klinik-Doktor gibi filtrelemeler yaparak aradığınız randevuyu otomatik olarak alabilirsiniz.
+
 Bu program telegram bot'u ile birlikte çalışmaktadır. Bu sayede bilgisayarınızdan uzakta olsanız bile telefon üzerinden randevu arayabilir ve uygun randevuyu aldıktan sonra bilgilendirilirsiniz.
 
 ## Neden Buna İhtiyaç Duyuldu?
