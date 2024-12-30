@@ -39,4 +39,4 @@ Kişisel verilerinizi sadece size ait olan bir bot ile paylaşmanız aklınızda
 Eğer başka bir telefon numarası ile eşleştirme yapmak istiyorsanız programın içinde bulunan "credentials.json" dosyasını siliniz. Bu sayede kurulum adımlarından 4. adıma dönmüş olacaksınız.
 
 ## Sorumluluk Reddi
-Bu açık kaynaklı bir projedir ve içerisinde bir çok hata bulunabilmektedir. Bu programın kullanımından dolayı oluşabilecek her türlü maddi ve manevi zarardan sadece kullanıcı sorumludur ve bu sorumluluğu kabul ederek programı kullanmaktadır. Oluşabilecek herhangi bir zarardan projenin geliştirilmesine katkı sağlayan hiçkimde sorumlu tutulamaz.
+Bu açık kaynaklı bir projedir ve içerisinde bir çok hata bulunabilmektedir. Bu programın kullanımından dolayı oluşabilecek her türlü maddi ve manevi zarardan sadece kullanıcı sorumludur ve bu sorumluluğu kabul ederek programı kullanmaktadır. Oluşabilecek herhangi bir zarardan projenin geliştirilmesine katkı sağlayan hiçkimse sorumlu tutulamaz.
